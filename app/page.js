@@ -2,7 +2,7 @@
 
 export default function Home() {
   // اكتب رقم هاتفك مع رمز الدولة بدون + (مثال للعراق: 9647700000000)
-  const whatsappNumber = "9647700000000";
+  const whatsappNumber = "9647751772000";
 
   const products = [
     { id: 1, name: "عطر ليونو الملكي", price: "25,000 د.ع", type: "تركيب خاص", desc: "ثبات عالي وتأثير فوّاح يدوم طويلاً." },
