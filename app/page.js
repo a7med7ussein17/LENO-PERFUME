@@ -2,8 +2,7 @@
 import { useState } from 'react';
 
 export default function Home() {
-  const whatsappNumber = "9647751772000
-    "; // اكتب رقم هاتفك مع رمز الدولة بدون +
+  const whatsappNumber = "9647751772000"; // اكتب رقم هاتفك مع رمز الدولة بدون +
 
   // قائمة المنتجات بدون التقييمات الوهمية
   const products = [
