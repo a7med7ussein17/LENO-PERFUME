@@ -55,34 +55,28 @@ export default function Home() {
     }
   ];
 
-  // حالات (States) النظام
+  // حالات النظام
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [filterCategory, setFilterCategory] = useState("الكل");
   
-  // حالات السلة (Cart)
+  // حالات السلة 
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // حساب مجموع القطع في السلة
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
-  // حساب السعر الكلي للسلة
   const cartTotalPrice = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-  // فتح نافذة تفاصيل العطر
   const openProduct = (product) => {
     setSelectedProduct(product);
     setSelectedSizeIndex(0);
     setQuantity(1);
   };
 
-  // وظيفة إضافة العطر للسلة
   const addToCart = () => {
     if (!selectedProduct) return;
     const currentSize = selectedProduct.sizes[selectedSizeIndex];
-    
-    // تكوين منتج فريد (عن طريق دمج الآي دي مع الحجم)
     const cartItemId = `${selectedProduct.id}-${currentSize.label}`;
     
     const newItem = {
@@ -95,7 +89,6 @@ export default function Home() {
     };
 
     setCart(prevCart => {
-      // إذا العطر موجود بنفس الحجم، نزيد الكمية فقط
       const existingItem = prevCart.find(item => item.cartItemId === cartItemId);
       if (existingItem) {
         return prevCart.map(item =>
@@ -104,22 +97,17 @@ export default function Home() {
             : item
         );
       }
-      // إذا ما موجود، نضيفه كمنتج جديد للسلة
       return [...prevCart, newItem];
     });
 
-    // إغلاق نافذة العطر بعد الإضافة
     setSelectedProduct(null);
-    // نفتح السلة للمستخدم حتى يشوف شضاف
     setIsCartOpen(true);
   };
 
-  // حذف عطر من السلة
   const removeFromCart = (cartItemId) => {
     setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
   };
 
-  // إرسال طلب السلة بالكامل للواتساب
   const sendCartWhatsAppOrder = () => {
     if (cart.length === 0) return;
 
@@ -168,7 +156,6 @@ export default function Home() {
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </div>
-          {/* زر فتح السلة (العربة) */}
           <div onClick={() => setIsCartOpen(true)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', position: 'relative' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -280,19 +267,19 @@ export default function Home() {
         </div>
       )}
 
-      {/* السلة الجانبية (Cart Sidebar) */}
+      {/* نافذة السلة (معدلة لتظهر من الأسفل مثل العطر) */}
       {isCartOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', justifyContent: 'flex-start', direction: 'rtl' }}>
-          <div style={{ width: '85%', maxWidth: '350px', backgroundColor: '#fff', height: '100%', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '-5px 0 15px rgba(0,0,0,0.1)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 200 }}>
+          <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '85vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', display: 'flex', flexDirection: 'column', direction: 'rtl' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e4e4e7', paddingBottom: '15px', marginBottom: '15px' }}>
               <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800' }}>سلة المشتريات ({cartItemsCount})</h2>
               <button onClick={() => setIsCartOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#71717a' }}>✕</button>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto' }}>
+            <div style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '10px' }}>
               {cart.length === 0 ? (
-                <div style={{ textAlign: 'center', color: '#71717a', marginTop: '50px' }}>
+                <div style={{ textAlign: 'center', color: '#71717a', margin: '40px 0' }}>
                   <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🛒</div>
                   <p>السلة فارغة حالياً</p>
                 </div>
@@ -317,7 +304,7 @@ export default function Home() {
             </div>
 
             {cart.length > 0 && (
-              <div style={{ borderTop: '1px solid #e4e4e7', paddingTop: '15px', marginTop: 'auto' }}>
+              <div style={{ borderTop: '1px solid #e4e4e7', paddingTop: '15px', marginTop: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontWeight: '900', fontSize: '1.1rem', color: '#18181b' }}>
                   <span>المجموع الكلي:</span>
                   <span>{cartTotalPrice.toLocaleString()} IQD</span>
