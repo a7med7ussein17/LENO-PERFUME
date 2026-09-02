@@ -11,7 +11,7 @@ export default function Home() {
       name: "Creed Aventus (كريد أفينتوس)",
       category: "تركيب",
       badge: "توصيل مجاني لـ 30ml", 
-      image: "/public/creed-aventus.png.jpg
+      image: "/public/creed-aventus.png.jpg",
 
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
