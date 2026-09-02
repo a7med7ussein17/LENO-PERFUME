@@ -14,7 +14,7 @@ export default function Home() {
       image: "/creed-aventus.png", // ضع الصورة داخل مجلد public بهذا الاسم
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
-        { label: "30 مل", price: 10000, originalPrice: 12000, freeDelivery: true }
+        { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
       ]
     }
   ];
