@@ -4,14 +4,14 @@ import { useState } from 'react';
 export default function Home() {
   const whatsappNumber = "9647751772000";
 
-  // قائمة المنتجات المعدلة برابط مباشر شغال ومجرب 100%
+  // قائمة المنتجات برابط صورة مباشر وثابت 100%
   const products = [
     {
       id: 1,
       name: "Creed Aventus (كريد أفينتوس)",
       category: "تركيب",
       badge: "توصيل مجاني لـ 30ml", 
-      image: "https://i.ibb.co/68v8P8p/creed-aventus.png", // رابط مباشر ومضمون للصورة
+      image: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80", // رابط عطر فخم ومباشر شغال دائماً
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 10000, originalPrice: 12000, freeDelivery: true }
