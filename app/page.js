@@ -11,7 +11,8 @@ export default function Home() {
       name: "Creed Aventus (كريد أفينتوس)",
       category: "تركيب",
       badge: "توصيل مجاني لـ 30ml", 
-      image: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80", // رابط عطر فخم ومباشر شغال دائماً
+      image: "https://iili.io/nHErxAF.png",
+
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 10000, originalPrice: 12000, freeDelivery: true }
