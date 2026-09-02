@@ -11,7 +11,8 @@ export default function Home() {
       name: "Creed Aventus (كريد أفينتوس)",
       category: "تركيب",
       badge: "توصيل مجاني لـ 30ml", 
-      image: "/public/creed-aventus.png.jpg",
+      image: "https://i.postimg.cc/85zK64K7/image.png",
+
 
 
       sizes: [
