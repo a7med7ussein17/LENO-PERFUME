@@ -13,6 +13,7 @@ export default function Home() {
       badge: "توصيل مجاني لـ 30ml", 
       image: "/public/creed-aventus.png.jpg",
 
+
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
