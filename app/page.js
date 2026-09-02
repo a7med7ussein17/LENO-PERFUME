@@ -2,16 +2,17 @@
 import { useState } from 'react';
 
 export default function Home() {
-  const whatsappNumber = "9647751772000"; // رقمك جاهز هنا
+  const whatsappNumber = "9647751772000"; // رقم الواتساب الخاص بمتجرك
 
-  // قائمة المنتجات
+  // 🌿 هنا قائمة المنتجات الخاصة بمتجرك 🌿
+  // يمكنك تعديل الأسماء، الصور، والأسعار بكل سهولة من هنا
   const products = [
     {
       id: 1,
-      name: "عطر التبغ الفرنسي",
-      category: "تقسيم",
-      badge: "", 
-      image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500&q=80",
+      name: "اسم العطر الأول",
+      category: "تقسيم", // اختر: "تركيب" أو "تقسيم"
+      badge: "جديد",     // اكتب "Sale" أو "جديد" أو اتركه فارغاً ""
+      image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500&q=80", // رابط صورة العطر
       sizes: [
         { label: "5 مل", price: 10000 },
         { label: "10 مل", price: 18000 },
@@ -20,37 +21,14 @@ export default function Home() {
     },
     {
       id: 2,
-      name: "عطر نيرو (Nero)",
+      name: "اسم العطر الثاني",
       category: "تركيب",
-      badge: "Sale",
+      badge: "الأكثر مبيعاً",
       image: "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=500&q=80",
       sizes: [
         { label: "5 مل", price: 8000 },
         { label: "10 مل", price: 15000 },
         { label: "50 مل", price: 35000 }
-      ]
-    },
-    {
-      id: 3,
-      name: "كينج توباكو",
-      category: "تركيب",
-      badge: "New",
-      image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=500&q=80",
-      sizes: [
-        { label: "5 مل", price: 6000 },
-        { label: "10 مل", price: 12000 },
-        { label: "50 مل", price: 30000 }
-      ]
-    },
-    {
-      id: 4,
-      name: "إيمرالد سول دايموند",
-      category: "تقسيم",
-      badge: "",
-      image: "https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=500&q=80",
-      sizes: [
-        { label: "10 مل", price: 20000 },
-        { label: "50 مل", price: 50000 }
       ]
     }
   ];
@@ -60,7 +38,10 @@ export default function Home() {
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [filterCategory, setFilterCategory] = useState("الكل");
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   // حالات السلة 
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -127,17 +108,21 @@ export default function Home() {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const filteredProducts = filterCategory === "الكل" 
-    ? products 
-    : products.filter(p => p.category === filterCategory);
+  // فلترة المنتجات حسب القسم والبحث
+  const filteredProducts = products.filter(p => {
+    const matchesCategory = filterCategory === "الكل" || p.category === filterCategory;
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div style={{ backgroundColor: '#fcfcfc', color: '#18181b', fontFamily: 'system-ui, -apple-system, sans-serif', direction: 'rtl', minHeight: '100vh', paddingBottom: '40px' }}>
       
-      {/* شريط الملاحة */}
+      {/* شريط الملاحة العلوي */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid #f4f4f5' }}>
         
-        <div style={{ cursor: 'pointer', color: '#3f3f46', display: 'flex', alignItems: 'center' }}>
+        {/* زر القائمة الجانبية */}
+        <div onClick={() => setIsMenuOpen(true)} style={{ cursor: 'pointer', color: '#3f3f46', display: 'flex', alignItems: 'center' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -145,12 +130,14 @@ export default function Home() {
           </svg>
         </div>
 
+        {/* اسم الماركة */}
         <div style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '1px', color: '#18181b' }}>
           ليـونـو
         </div>
 
+        {/* البحث والسلة */}
         <div style={{ display: 'flex', gap: '18px', alignItems: 'center', color: '#3f3f46' }}>
-          <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <div onClick={() => setIsSearchOpen(!isSearchOpen)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -171,8 +158,21 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* البانر */}
-      <div style={{ backgroundColor: '#2d3732', color: '#fff', textAlign: 'center', padding: '40px 20px', margin: '10px 16px', borderRadius: '16px', backgroundSize: 'cover' }}>
+      {/* حقل البحث التفاعلي */}
+      {isSearchOpen && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#fff', borderBottom: '1px solid #e4e4e7' }}>
+          <input
+            type="text"
+            placeholder="ابحث عن اسم العطر..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #d4d4d8', fontSize: '0.95rem', outline: 'none' }}
+          />
+        </div>
+      )}
+
+      {/* البانر الرئيسي */}
+      <div style={{ backgroundColor: '#2d3732', color: '#fff', textAlign: 'center', padding: '40px 20px', margin: '10px 16px', borderRadius: '16px' }}>
         <h1 style={{ fontSize: '1.8rem', margin: '0 0 8px 0', fontWeight: '800' }}>عطرك.. بصمتك التي لا تُنسى.</h1>
         <p style={{ fontSize: '0.9rem', color: '#e4e4e7', margin: 0 }}>اكتشف تشكيلة ليونو الفاخرة الآن ➔</p>
       </div>
@@ -203,28 +203,34 @@ export default function Home() {
         </div>
       </div>
 
-      {/* المنتجات */}
+      {/* عرض المنتجات */}
       <main style={{ padding: '0 16px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-          {filteredProducts.map((p) => (
-            <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
-              {p.badge && (
-                <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#b91c1c', color: '#fff', fontSize: '0.7rem', padding: '3px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
-                  {p.badge}
-                </span>
-              )}
-              <div style={{ width: '100%', height: '170px', backgroundColor: '#f9f9f9', overflow: 'hidden' }}>
-                <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-              <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
-                <h3 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
-                <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#2d3732' }}>
-                  {p.sizes[0].price.toLocaleString()} IQD
+        {filteredProducts.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#71717a' }}>
+            لا توجد عطور تطابق بحثك.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            {filteredProducts.map((p) => (
+              <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+                {p.badge && (
+                  <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#b91c1c', color: '#fff', fontSize: '0.7rem', padding: '3px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
+                    {p.badge}
+                  </span>
+                )}
+                <div style={{ width: '100%', height: '170px', backgroundColor: '#f9f9f9', overflow: 'hidden' }}>
+                  <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#2d3732' }}>
+                    {p.sizes[0].price.toLocaleString()} IQD
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* نافذة تفاصيل العطر للإضافة للسلة */}
@@ -267,16 +273,14 @@ export default function Home() {
         </div>
       )}
 
-      {/* نافذة السلة (معدلة لتظهر من الأسفل مثل العطر) */}
+      {/* نافذة السلة السفلية */}
       {isCartOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 200 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '85vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', display: 'flex', flexDirection: 'column', direction: 'rtl' }}>
-            
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e4e4e7', paddingBottom: '15px', marginBottom: '15px' }}>
               <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800' }}>سلة المشتريات ({cartItemsCount})</h2>
               <button onClick={() => setIsCartOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#71717a' }}>✕</button>
             </div>
-
             <div style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '10px' }}>
               {cart.length === 0 ? (
                 <div style={{ textAlign: 'center', color: '#71717a', margin: '40px 0' }}>
@@ -302,7 +306,6 @@ export default function Home() {
                 ))
               )}
             </div>
-
             {cart.length > 0 && (
               <div style={{ borderTop: '1px solid #e4e4e7', paddingTop: '15px', marginTop: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontWeight: '900', fontSize: '1.1rem', color: '#18181b' }}>
@@ -314,7 +317,24 @@ export default function Home() {
                 </button>
               </div>
             )}
-            
+          </div>
+        </div>
+      )}
+
+      {/* القائمة الجانبية (Hamburger Menu) */}
+      {isMenuOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', justifyContent: 'flex-start' }}>
+          <div style={{ width: '75%', maxWidth: '300px', backgroundColor: '#fff', height: '100%', padding: '24px 20px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f4f4f5', paddingBottom: '15px' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: '900', color: '#2d3732' }}>ليـونـو 🌿</div>
+              <button onClick={() => setIsMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '1rem', fontWeight: '600', color: '#27272a' }}>
+              <div onClick={() => setIsMenuOpen(false)} style={{ cursor: 'pointer' }}>الرئيسية 🏠</div>
+              <div onClick={() => { setFilterCategory("تركيب"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور التركيب 🧪</div>
+              <div onClick={() => { setFilterCategory("تقسيم"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور التقسيم 🧴</div>
+              <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>تواصل معنا (واتساب) 💬</a>
+            </div>
           </div>
         </div>
       )}
