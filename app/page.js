@@ -4,7 +4,6 @@ import { useState } from 'react';
 export default function Home() {
   const whatsappNumber = "9647751772000";
 
-  // قائمة المنتجات برابط صورة مباشر وثابت 100%
   const products = [
     {
       id: 1,
@@ -12,7 +11,6 @@ export default function Home() {
       category: "تركيب",
       badge: "توصيل مجاني لـ 30ml", 
       image: "https://iili.io/nHErxAF.png",
-
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 10000, originalPrice: 12000, freeDelivery: true }
@@ -20,7 +18,6 @@ export default function Home() {
     }
   ];
 
-  // حالات النظام
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -29,7 +26,9 @@ export default function Home() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // حالات السلة 
+  // حالة تكبير الصورة (Lightbox)
+  const [zoomedImage, setZoomedImage] = useState(null);
+
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -106,7 +105,7 @@ export default function Home() {
   return (
     <div style={{ backgroundColor: '#fcfcfc', color: '#18181b', fontFamily: 'system-ui, -apple-system, sans-serif', direction: 'rtl', minHeight: '100vh', paddingBottom: '40px' }}>
       
-      {/* شريط الملاحة العلوي */}
+      {/* شريط الملاحة */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid #f4f4f5' }}>
         <div onClick={() => setIsMenuOpen(true)} style={{ cursor: 'pointer', color: '#3f3f46', display: 'flex', alignItems: 'center' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -202,8 +201,9 @@ export default function Home() {
                     {p.badge}
                   </span>
                 )}
-                <div style={{ width: '100%', height: '170px', backgroundColor: '#f9f9f9', overflow: 'hidden' }}>
-                  <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {/* تعديل إظهار الصورة كاملة بدون قص */}
+                <div style={{ width: '100%', height: '180px', backgroundColor: '#f9f9f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
                 <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
                   <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
@@ -227,12 +227,18 @@ export default function Home() {
               <span style={{ fontSize: '0.85rem', color: '#71717a' }}>تفاصيل العطر</span>
               <button onClick={() => setSelectedProduct(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
             </div>
-            <div style={{ width: '100%', height: '220px', borderRadius: '16px', overflow: 'hidden', marginBottom: '15px' }}>
-              <img src={selectedProduct.image} alt={selectedProduct.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            
+            {/* تعديل الصورة داخل النافذة: تظهر كاملة + إمكانية النقر للتكبير */}
+            <div 
+              onClick={() => setZoomedImage(selectedProduct.image)}
+              style={{ width: '100%', height: '260px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '15px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <img src={selectedProduct.image} alt={selectedProduct.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              <span style={{ position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem' }}>🔍 اضغط لتكبير الصورة</span>
             </div>
+
             <h2 style={{ margin: '0 0 10px 0', fontSize: '1.3rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
-            {/* عرض السعر والخصم */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
               <span style={{ fontSize: '1.6rem', fontWeight: '900', color: '#2d3732' }}>
                 {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()} IQD
@@ -244,7 +250,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* تنبيه التوصيل المجاني لحجم 30 مل */}
             {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
               <div style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '15px', border: '1px solid #bbf7d0' }}>
                 🚚 يشمل توصيل مجاني لهذا الحجم!
@@ -279,7 +284,15 @@ export default function Home() {
         </div>
       )}
 
-      {/* نافذة السلة السفلية */}
+      {/* نافذة تكبير الصورة (Full Screen Lightbox) */}
+      {zoomedImage && (
+        <div onClick={() => setZoomedImage(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <button onClick={() => setZoomedImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', color: '#fff', background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer' }}>✕</button>
+          <img src={zoomedImage} alt="عطر زوم" style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: '8px' }} />
+        </div>
+      )}
+
+      {/* نافذة السلة */}
       {isCartOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 200 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '85vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', display: 'flex', flexDirection: 'column', direction: 'rtl' }}>
@@ -296,7 +309,7 @@ export default function Home() {
               ) : (
                 cart.map(item => (
                   <div key={item.cartItemId} style={{ display: 'flex', gap: '12px', marginBottom: '15px', borderBottom: '1px solid #f4f4f5', paddingBottom: '15px' }}>
-                    <img src={item.image} alt={item.name} style={{ width: '65px', height: '65px', borderRadius: '8px', objectFit: 'cover' }} />
+                    <img src={item.image} alt={item.name} style={{ width: '65px', height: '65px', borderRadius: '8px', objectFit: 'contain', backgroundColor: '#f9f9f9' }} />
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: '#18181b' }}>{item.name}</h4>
                       <div style={{ fontSize: '0.8rem', color: '#52525b' }}>
