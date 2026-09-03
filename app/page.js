@@ -116,7 +116,7 @@ export default function Home() {
         </div>
 
         <div style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '1px', color: '#18181b' }}>
-          ليـونـو
+          ليـنـو
         </div>
 
         <div style={{ display: 'flex', gap: '18px', alignItems: 'center', color: '#3f3f46' }}>
