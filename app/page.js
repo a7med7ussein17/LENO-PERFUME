@@ -4,6 +4,7 @@ import { useState } from 'react';
 export default function Home() {
   const whatsappNumber = "9647751772000";
 
+  // قائمة المنتجات (العطر الأول + العطر الجديد)
   const products = [
     {
       id: 1,
@@ -11,6 +12,17 @@ export default function Home() {
       category: "تركيب",
       badge: "توصيل مجاني لـ 30ml", 
       image: "https://iili.io/nHErxAF.png",
+      sizes: [
+        { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
+        { label: "30 مل", price: 10000, originalPrice: 12000, freeDelivery: true }
+      ]
+    },
+    {
+      id: 2,
+      name: "اسم العطر الجديد هنا", //  Imagination Louis vitton
+      category: "تركيب", // اختر الفئة: "تركيب" أو "تقسيم"
+      badge: "توصيل مجاني لـ 30ml", 
+      image: "https://iili.io/n3JOfqb.png", // رابط الصورة الجديد المباشر
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
@@ -26,7 +38,7 @@ export default function Home() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // حالة تكبير الصورة (Lightbox)
+  // حالة تكبير الصورة
   const [zoomedImage, setZoomedImage] = useState(null);
 
   const [cart, setCart] = useState([]);
@@ -116,7 +128,7 @@ export default function Home() {
         </div>
 
         <div style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '1px', color: '#18181b' }}>
-          ليـنـو
+          ليـونـو
         </div>
 
         <div style={{ display: 'flex', gap: '18px', alignItems: 'center', color: '#3f3f46' }}>
@@ -201,7 +213,6 @@ export default function Home() {
                     {p.badge}
                   </span>
                 )}
-                {/* تعديل إظهار الصورة كاملة بدون قص */}
                 <div style={{ width: '100%', height: '180px', backgroundColor: '#f9f9f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
@@ -228,7 +239,6 @@ export default function Home() {
               <button onClick={() => setSelectedProduct(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
             </div>
             
-            {/* تعديل الصورة داخل النافذة: تظهر كاملة + إمكانية النقر للتكبير */}
             <div 
               onClick={() => setZoomedImage(selectedProduct.image)}
               style={{ width: '100%', height: '260px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '15px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
