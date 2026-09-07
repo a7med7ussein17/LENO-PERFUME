@@ -4,25 +4,13 @@ import { useState } from 'react';
 export default function Home() {
   const whatsappNumber = "9647751772000";
 
-  // قائمة المنتجات (العطر الأول + العطر الجديد)
   const products = [
     {
       id: 1,
       name: "Creed Aventus (كريد أفينتوس)",
       category: "تركيب",
       badge: "توصيل مجاني لـ 30ml", 
-      image: "https://iili.io/nHErxAF.png", //
-      sizes: [
-        { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
-        { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
-      ]
-    },
-    {
-      id: 2,
-      name: "اسم العطر الجديد هنا", //  Imagination Louis vitton
-      category: "تركيب", // اختر الفئة: "تركيب" أو "تقسيم"
-      badge: "توصيل مجاني لـ 30ml", 
-      image: "https://iili.io/n3JOfqb.png", // رابط الصورة الجديد المباشر
+      image: "https://iili.io/n3JiY4S.jpg",
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
@@ -38,7 +26,6 @@ export default function Home() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // حالة تكبير الصورة
   const [zoomedImage, setZoomedImage] = useState(null);
 
   const [cart, setCart] = useState([]);
