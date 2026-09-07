@@ -15,6 +15,17 @@ export default function Home() {
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
       ]
+    },
+    {
+      id: 2,
+      name: "Imagination - Louis Vuitton (إيماجينشين)",
+      category: "تركيب",
+      badge: "توصيل مجاني لـ 30ml", 
+      image: "https://iili.io/nHErxAF.png",
+      sizes: [
+        { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
+        { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
+      ]
     }
   ];
 
