@@ -11,7 +11,15 @@ export default function Home() {
       name: "Creed Aventus (كريد أفينتوس)",
       category: "تركيب",
       badge: "توصيل مجاني لـ 30ml", 
-      image: "https://iili.io/nHErxAF.png",
+      {
+  id: 1,
+  name: "Creed Aventus (كريد أفينتوس)",
+  category: "تركيب",
+  badge: "توصيل مجاني لـ 30ml", 
+  image: "https://iili.io/nHErxAF.png", // <--- استبدل هذا السطر فقط
+  sizes: [ ... ]
+}
+
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 10000, originalPrice: 12000, freeDelivery: true }
