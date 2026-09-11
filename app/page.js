@@ -25,7 +25,7 @@ export default function Home() {
 
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
-        { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
+        { label: "30 مل", price: 23000, originalPrice: 25000, freeDelivery: true }
       ]
     }
   ];
