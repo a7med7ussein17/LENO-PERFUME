@@ -24,7 +24,7 @@ export default function Home() {
       image: "https://iili.io/n3JOfqb.jpg",
 
       sizes: [
-        { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
+        { label: "10 مل", price: 10000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 23000, originalPrice: 25000, freeDelivery: true }
       ]
     }
