@@ -8,7 +8,7 @@ export default function Home() {
     {
       id: 1,
       name: "Creed Aventus (كريد أفينتوس)",
-      category: "تركيب",
+      category: "LENO",
       badge: "توصيل مجاني لـ 30ml", 
       image: "https://iili.io/n3JiY4S.jpg",
       sizes: [
@@ -19,7 +19,7 @@ export default function Home() {
     {
       id: 2,
       name: "Imagination - Louis Vuitton (إيماجينشين)",
-      category: "تركيب",
+      category: "LENO",
       badge: "توصيل مجاني لـ 30ml", 
       image: "https://iili.io/n3JOfqb.jpg",
       sizes: [
@@ -30,8 +30,8 @@ export default function Home() {
     {
       id: 3,
       name: "مجموعة التوباكو من إبراق",
-      category: "تقسيم",
-      badge: "عطر تقسيم أصلـي ✨", 
+      category: "Original",
+      badge: "Original 100% ✨", 
       image: "https://iili.io/nqnsfvp.jpg",
       sizes: [
         { label: "قطعة واحدة (20 مل)", price: 15000, originalPrice: null, freeDelivery: false },
@@ -185,7 +185,7 @@ export default function Home() {
       <div style={{ padding: '0 16px', marginTop: '25px', marginBottom: '15px' }}>
         <h2 style={{ fontSize: '1.3rem', margin: '0 0 15px 0', fontWeight: '800' }}>التسوق حسب المجموعة</h2>
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
-          {["الكل", "تركيب", "تقسيم"].map((cat) => (
+          {["الكل", "LENO", "Original"].map((cat) => (
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
@@ -371,8 +371,8 @@ export default function Home() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '1rem', fontWeight: '600', color: '#27272a' }}>
               <div onClick={() => setIsMenuOpen(false)} style={{ cursor: 'pointer' }}>الرئيسية 🏠</div>
-              <div onClick={() => { setFilterCategory("تركيب"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور التركيب 🧪</div>
-              <div onClick={() => { setFilterCategory("تقسيم"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور التقسيم 🧴</div>
+              <div onClick={() => { setFilterCategory("LENO"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور LENO 🧪</div>
+              <div onClick={() => { setFilterCategory("Original"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور Original ✨</div>
               <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>تواصل معنا (واتساب) 💬</a>
             </div>
           </div>
