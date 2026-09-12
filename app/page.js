@@ -22,10 +22,20 @@ export default function Home() {
       category: "تركيب",
       badge: "توصيل مجاني لـ 30ml", 
       image: "https://iili.io/n3JOfqb.jpg",
-
       sizes: [
         { label: "10 مل", price: 10000, originalPrice: null, freeDelivery: false },
         { label: "30 مل", price: 23000, originalPrice: 25000, freeDelivery: true }
+      ]
+    },
+    {
+      id: 3,
+      name: "مجموعة التوباكو من إبراق",
+      category: "تقسيم",
+      badge: "عطر تقسيم أصلـي ✨", 
+      image: "https://iili.io/nqnsfvp.jpg",
+      sizes: [
+        { label: "قطعة واحدة (20 مل)", price: 15000, originalPrice: null, freeDelivery: false },
+        { label: "المجموعة كاملة", price: 85000, originalPrice: null, freeDelivery: true }
       ]
     }
   ];
@@ -261,12 +271,12 @@ export default function Home() {
 
             {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
               <div style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '15px', border: '1px solid #bbf7d0' }}>
-                🚚 يشمل توصيل مجاني لهذا الحجم!
+                🚚 يشمل توصيل مجاني لهذا الخيار!
               </div>
             )}
 
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم أو العرض</label>
               <div style={{ display: 'flex', gap: '10px' }}>
                 {selectedProduct.sizes.map((size, index) => (
                   <button key={index} onClick={() => setSelectedSizeIndex(index)} style={{ flex: 1, padding: '12px 8px', borderRadius: '8px', border: selectedSizeIndex === index ? '2px solid #2d3732' : '1px solid #e4e4e7', backgroundColor: selectedSizeIndex === index ? '#2d3732' : '#fff', color: selectedSizeIndex === index ? '#fff' : '#18181b', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>
@@ -356,7 +366,7 @@ export default function Home() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', justifyContent: 'flex-start' }}>
           <div style={{ width: '75%', maxWidth: '300px', backgroundColor: '#fff', height: '100%', padding: '24px 20px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f4f4f5', paddingBottom: '15px' }}>
-              <div style={{ fontSize: '1.3rem', fontWeight: '900', color: '#2d3732' }}>ليـونـو 🌿</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: '900', color: '#2d3732' }}>لـينـو 🌿</div>
               <button onClick={() => setIsMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '1rem', fontWeight: '600', color: '#27272a' }}>
