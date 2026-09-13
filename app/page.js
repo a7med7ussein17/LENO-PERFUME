@@ -12,7 +12,7 @@ function AddProductForm({ onProductAdded }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const ADMIN_PIN = "1234"; // 👈 غير هذا الرمز السري لخيارك الخاص
+  const ADMIN_PIN = "1772"; // 👈 غير هذا الرمز السري لخيارك الخاص
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState('LENO');
