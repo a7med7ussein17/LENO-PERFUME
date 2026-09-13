@@ -1,10 +1,192 @@
 'use client';
 import { useState } from 'react';
 
+// مكون نموذج إضافة عطر جديد (مدمج)
+function AddProductForm({ onAddProduct }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('LENO');
+  const [badge, setBadge] = useState('');
+  const [image, setImage] = useState('');
+  
+  const [size1Label, setSize1Label] = useState('10 مل');
+  const [size1Price, setSize1Price] = useState('');
+  const [size1Free, setSize1Free] = useState(false);
+
+  const [size2Label, setSize2Label] = useState('30 مل');
+  const [size2Price, setSize2Price] = useState('');
+  const [size2OriginalPrice, setSize2OriginalPrice] = useState('');
+  const [size2Free, setSize2Free] = useState(true);
+
+  // رفع الصورة من الجهاز وتحويلها فوراً
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!name || !image || !size1Price) {
+      alert('الرجاء كتابة اسم العطر، اختيار صورة، وإضافة سعر واحد على الأقل!');
+      return;
+    }
+
+    const sizes = [
+      {
+        label: size1Label,
+        price: Number(size1Price),
+        originalPrice: null,
+        freeDelivery: size1Free
+      }
+    ];
+
+    if (size2Price) {
+      sizes.push({
+        label: size2Label,
+        price: Number(size2Price),
+        originalPrice: size2OriginalPrice ? Number(size2OriginalPrice) : null,
+        freeDelivery: size2Free
+      });
+    }
+
+    const newProduct = {
+      id: Date.now(),
+      name,
+      category,
+      badge: badge || null,
+      image,
+      sizes
+    };
+
+    onAddProduct(newProduct);
+
+    // تفريغ الحقول
+    setName('');
+    setBadge('');
+    setImage('');
+    setSize1Price('');
+    setSize2Price('');
+    setSize2OriginalPrice('');
+    setIsOpen(false);
+  };
+
+  return (
+    <div style={{ padding: '0 16px', marginBottom: '20px', direction: 'rtl' }}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '100%',
+          backgroundColor: '#2d3732',
+          color: '#fff',
+          padding: '14px',
+          borderRadius: '12px',
+          border: 'none',
+          fontWeight: 'bold',
+          fontSize: '0.95rem',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justify: 'center',
+          gap: '8px'
+        }}
+      >
+        <span>{isOpen ? 'إغلاق نموذج الإضافة ✕' : '➕ إضافة عطر جديد فوراً'}</span>
+      </button>
+
+      {isOpen && (
+        <form onSubmit={handleSubmit} style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #e4e4e7', marginTop: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1rem', color: '#18181b' }}>بيانات العطر الجديد</h3>
+          
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '5px' }}>اسم العطر</label>
+            <input 
+              type="text" 
+              placeholder="مثال: Sauvage - Dior" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d4d4d8', outline: 'none' }}
+              required
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '5px' }}>التصنيف</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d4d4d8', backgroundColor: '#fff' }}>
+                <option value="LENO">LENO</option>
+                <option value="Original">Original</option>
+              </select>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '5px' }}>الشارة (Badge)</label>
+              <input 
+                type="text" 
+                placeholder="مثال: الأكثر مبيعاً" 
+                value={badge} 
+                onChange={(e) => setBadge(e.target.value)} 
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d4d4d8', outline: 'none' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '5px' }}>صورة العطر (اختر من الجهاز)</label>
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleImageUpload} 
+              style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #d4d4d8', backgroundColor: '#f9f9f9' }}
+              required
+            />
+            {image && (
+              <div style={{ marginTop: '8px', textAlign: 'center' }}>
+                <img src={image} alt="معاينة" style={{ height: '80px', borderRadius: '8px', objectFit: 'contain' }} />
+              </div>
+            )}
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #f4f4f5', margin: '15px 0' }} />
+
+          <div style={{ marginBottom: '12px' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#2d3732' }}>الحجم الأول:</span>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
+              <input type="text" placeholder="الحجم (10 مل)" value={size1Label} onChange={(e) => setSize1Label(e.target.value)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #d4d4d8' }} />
+              <input type="number" placeholder="السعر (IQD)" value={size1Price} onChange={(e) => setSize1Price(e.target.value)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #d4d4d8' }} required />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#2d3732' }}>الحجم الثاني (اختياري):</span>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
+              <input type="text" placeholder="الحجم (30 مل)" value={size2Label} onChange={(e) => setSize2Label(e.target.value)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #d4d4d8' }} />
+              <input type="number" placeholder="السعر" value={size2Price} onChange={(e) => setSize2Price(e.target.value)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #d4d4d8' }} />
+              <input type="number" placeholder="قبل الخصم" value={size2OriginalPrice} onChange={(e) => setSize2OriginalPrice(e.target.value)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #d4d4d8' }} />
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            style={{ width: '100%', backgroundColor: '#166534', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            حفظ وإضافة للمتجر 🚀
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const whatsappNumber = "9647751772000";
 
-  const products = [
+  // قائمة المنتجات جعلناها حالة (State) لتقبل الإضافة الفورية
+  const [products, setProducts] = useState([
     {
       id: 1,
       name: "Creed Aventus (كريد أفينتوس)",
@@ -38,7 +220,7 @@ export default function Home() {
         { label: "المجموعة كاملة", price: 85000, originalPrice: null, freeDelivery: true }
       ]
     }
-  ];
+  ]);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
@@ -55,6 +237,10 @@ export default function Home() {
 
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
   const cartTotalPrice = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+  const handleAddNewProduct = (newPerfume) => {
+    setProducts([newPerfume, ...products]);
+  };
 
   const openProduct = (product) => {
     setSelectedProduct(product);
@@ -181,8 +367,11 @@ export default function Home() {
         <p style={{ fontSize: '0.9rem', color: '#e4e4e7', margin: 0 }}>اكتشف تشكيلة لينو الفاخرة الآن ➔</p>
       </div>
 
+      {/* زر ونموذج إضافة العطر الجديد */}
+      <AddProductForm onAddProduct={handleAddNewProduct} />
+
       {/* الفلترة */}
-      <div style={{ padding: '0 16px', marginTop: '25px', marginBottom: '15px' }}>
+      <div style={{ padding: '0 16px', marginTop: '10px', marginBottom: '15px' }}>
         <h2 style={{ fontSize: '1.3rem', margin: '0 0 15px 0', fontWeight: '800' }}>التسوق حسب المجموعة</h2>
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
           {["الكل", "LENO", "Original"].map((cat) => (
