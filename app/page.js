@@ -46,6 +46,9 @@ export default function Home() {
   ]);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+
   const [filterCategory, setFilterCategory] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -56,7 +59,7 @@ export default function Home() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // حالات لوحة إضافة العطر للمشرف
+  // بيانات لوحة التحكم
   const ADMIN_PIN = "1234";
   const [name, setName] = useState('');
   const [category, setCategory] = useState('LENO');
@@ -80,6 +83,61 @@ export default function Home() {
   }, []);
 
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const cartTotalPrice = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+  const openProduct = (product) => {
+    setSelectedProduct(product);
+    setSelectedSizeIndex(0);
+    setQuantity(1);
+  };
+
+  const addToCart = () => {
+    if (!selectedProduct) return;
+    const currentSize = selectedProduct.sizes[selectedSizeIndex];
+    const cartItemId = `${selectedProduct.id}-${currentSize.label}`;
+    
+    const newItem = {
+      cartItemId,
+      name: selectedProduct.name,
+      image: selectedProduct.image,
+      sizeLabel: currentSize.label,
+      price: currentSize.price,
+      freeDelivery: currentSize.freeDelivery,
+      quantity
+    };
+
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => item.cartItemId === cartItemId);
+      if (existingItem) {
+        return prevCart.map(item =>
+          item.cartItemId === cartItemId
+            ? { ...item, quantity: item.quantity + newItem.quantity }
+            : item
+        );
+      }
+      return [...prevCart, newItem];
+    });
+
+    setSelectedProduct(null);
+    setIsCartOpen(true);
+  };
+
+  const removeFromCart = (cartItemId) => {
+    setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
+  };
+
+  const sendCartWhatsAppOrder = () => {
+    if (cart.length === 0) return;
+    let text = `مرحباً LENO PERFUME 🌿\nأرغب بطلب المنتجات التالية:\n\n`;
+    cart.forEach((item, index) => {
+      const itemTotal = item.price * item.quantity;
+      const deliveryNote = item.freeDelivery ? " (توصيل مجاني 🚚)" : "";
+      text += `${index + 1}. ${item.name}\n- المقاس: ${item.sizeLabel}${deliveryNote}\n- العدد: ${item.quantity}\n- السعر: ${itemTotal.toLocaleString()} IQD\n\n`;
+    });
+    text += `ــــــــــــــــــــــــــــ\nالمجموع الكلي: ${cartTotalPrice.toLocaleString()} IQD`;
+
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   const handleOpenAdminFromMenu = () => {
     setIsMenuOpen(false);
@@ -103,13 +161,13 @@ export default function Home() {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!name || !image || !size1Price) {
-      alert('يرجى ملاءة المعلومات الأساسية!');
+      alert('يرجى ملء المعلومات الأساسية!');
       return;
     }
 
     setLoading(true);
-    const sizes = [{ label: size1Label, price: Number(size1Price) }];
-    if (size2Price) sizes.push({ label: size2Label, price: Number(size2Price) });
+    const sizes = [{ label: size1Label, price: Number(size1Price), freeDelivery: false }];
+    if (size2Price) sizes.push({ label: size2Label, price: Number(size2Price), freeDelivery: true });
 
     const newProduct = { name, category, badge: badge || null, image, sizes };
 
@@ -137,7 +195,7 @@ export default function Home() {
   });
 
   return (
-    <div style={{ backgroundColor: '#fcfcfc', color: '#18181b', fontFamily: 'system-ui, sans-serif', direction: 'rtl', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: '#fcfcfc', color: '#18181b', fontFamily: 'system-ui, sans-serif', direction: 'rtl', minHeight: '100vh', paddingBottom: '40px' }}>
       
       {/* Navbar */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #f4f4f5' }}>
@@ -156,7 +214,14 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* القائمة الجانبية (Sidebar) */}
+      {/* حقل البحث */}
+      {isSearchOpen && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#fff', borderBottom: '1px solid #e4e4e7' }}>
+          <input type="text" placeholder="ابحث عن اسم العطر..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #d4d4d8', fontSize: '0.95rem', outline: 'none' }} />
+        </div>
+      )}
+
+      {/* القائمة الجانبية */}
       {isMenuOpen && (
         <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex' }}>
           <div style={{ width: '280px', backgroundColor: '#fff', height: '100%', padding: '24px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '-2px 0 12px rgba(0,0,0,0.1)' }}>
@@ -172,12 +237,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* خيار الإدارة داخل القائمة الجانبية */}
             <div style={{ borderTop: '1px solid #f4f4f5', paddingTop: '15px' }}>
-              <div 
-                onClick={handleOpenAdminFromMenu} 
-                style={{ cursor: 'pointer', color: '#71717a', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
+              <div onClick={handleOpenAdminFromMenu} style={{ cursor: 'pointer', color: '#71717a', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span>🔒</span>
                 <span>لوحة التحكم (المشرف)</span>
               </div>
@@ -234,9 +295,9 @@ export default function Home() {
       {/* Categories */}
       <div style={{ padding: '0 16px', marginBottom: '15px' }}>
         <h2 style={{ fontSize: '1.3rem', margin: '0 0 15px 0', fontWeight: '800' }}>التسوق حسب المجموعة</h2>
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
           {["الكل", "LENO", "Original"].map((cat) => (
-            <button key={cat} onClick={() => setFilterCategory(cat)} style={{ padding: '8px 18px', borderRadius: '20px', border: filterCategory === cat ? 'none' : '1px solid #e4e4e7', backgroundColor: filterCategory === cat ? '#2d3732' : '#fff', color: filterCategory === cat ? '#fff' : '#52525b', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer' }}>
+            <button key={cat} onClick={() => setFilterCategory(cat)} style={{ padding: '8px 18px', borderRadius: '20px', border: filterCategory === cat ? 'none' : '1px solid #e4e4e7', backgroundColor: filterCategory === cat ? '#2d3732' : '#fff', color: filterCategory === cat ? '#fff' : '#52525b', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               {cat}
             </button>
           ))}
@@ -244,11 +305,11 @@ export default function Home() {
       </div>
 
       {/* Products Grid */}
-      <main style={{ padding: '0 16px', paddingBottom: '40px' }}>
+      <main style={{ padding: '0 16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
           {filteredProducts.map((p) => (
-            <div key={p.id} onClick={() => setSelectedProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
-              {p.badge && <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#2d3732', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{p.badge}</span>}
+            <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+              {p.badge && <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#2d3732', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>{p.badge}</span>}
               <div style={{ width: '100%', height: '180px', backgroundColor: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
@@ -262,6 +323,101 @@ export default function Home() {
           ))}
         </div>
       </main>
+
+      {/* Modal - نافذة تفاصيل العطر والشراء */}
+      {selectedProduct && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '500px', borderRadius: '24px 24px 0 0', padding: '24px', maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}>
+            <button onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '16px', left: '16px', border: 'none', background: '#f4f4f5', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
+
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              <img src={selectedProduct.image} alt={selectedProduct.name} style={{ height: '180px', objectFit: 'contain' }} />
+            </div>
+
+            <h2 style={{ fontSize: '1.2rem', margin: '0 0 8px 0', fontWeight: '800' }}>{selectedProduct.name}</h2>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>اختر الحجم:</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {selectedProduct.sizes.map((size, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedSizeIndex(idx)}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      borderRadius: '12px',
+                      border: selectedSizeIndex === idx ? '2px solid #2d3732' : '1px solid #e4e4e7',
+                      backgroundColor: selectedSizeIndex === idx ? '#f4f4f5' : '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{size.label}</div>
+                    <div style={{ fontSize: '0.85rem', color: '#2d3732', marginTop: '2px' }}>{size.price.toLocaleString()} IQD</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e4e4e7', borderRadius: '12px', padding: '4px' }}>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '36px', height: '36px', border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>-</button>
+                <span style={{ padding: '0 12px', fontWeight: 'bold' }}>{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} style={{ width: '36px', height: '36px', border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>+</button>
+              </div>
+
+              <button onClick={addToCart} style={{ flex: 1, backgroundColor: '#2d3732', color: '#fff', padding: '14px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                إضافة للسلة 🛍️
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drawer - نافذة السلة الجانبية */}
+      {isCartOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '400px', height: '100%', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '800' }}>سلة التسوق</h2>
+                <button onClick={() => setIsCartOpen(false)} style={{ border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+              </div>
+
+              {cart.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#71717a', marginTop: '40px' }}>السلة فارغة حالياً.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto' }}>
+                  {cart.map((item) => (
+                    <div key={item.cartItemId} style={{ display: 'flex', gap: '12px', alignItems: 'center', borderBottom: '1px solid #f4f4f5', paddingBottom: '12px' }}>
+                      <img src={item.image} alt={item.name} style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>{item.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#71717a' }}>{item.sizeLabel} × {item.quantity}</div>
+                        <div style={{ fontWeight: '800', fontSize: '0.85rem', color: '#2d3732' }}>{(item.price * item.quantity).toLocaleString()} IQD</div>
+                      </div>
+                      <button onClick={() => removeFromCart(item.cartItemId)} style={{ background: 'none', border: 'none', color: '#b91c1c', cursor: 'pointer' }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {cart.length > 0 && (
+              <div style={{ borderTop: '1px solid #e4e4e7', paddingTop: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontWeight: '800', fontSize: '1.1rem' }}>
+                  <span>المجموع:</span>
+                  <span>{cartTotalPrice.toLocaleString()} IQD</span>
+                </div>
+                <button onClick={sendCartWhatsAppOrder} style={{ width: '100%', backgroundColor: '#166534', color: '#fff', padding: '14px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                  إرسال الطلب عبر واتساب 💬
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );
