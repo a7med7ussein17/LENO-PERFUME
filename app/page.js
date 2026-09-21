@@ -1,10 +1,49 @@
 'use client';
-import { useState } from 'react';
+import { useState، useEffect } from 'react';
 
 export default function Home() {
   const whatsappNumber = "9647751772000";
 
-  const products = [
+    const SUPABASE_URL = "https://bqodbfoopkzbnysztdnp.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_GJJ7tpPrgW6Qg-YwTrayzQ_dYC2JJgm";
+
+  const initialProducts = [
+    {
+      id: 1,
+      name: "Creed Aventus (كريد أفينتوس)",
+      category: "LENO",
+      badge: "توصيل مجاني لـ 30ml",
+      image: "https://iili.io/n3JiY4S.jpg",
+      sizes: [
+        { label: "10 مل", price: 5000, originalPrice: 7000 },
+        { label: "30 مل", price: 12000, originalPrice: 15000 }
+      ]
+    }
+  ];
+
+  const [products, setProducts] = useState(initialProducts);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        if (!res.ok) throw new Error("فشل الاتصال");
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setProducts(data);
+        }
+      } catch (err) {
+        console.warn("استخدام البيانات الاحتياطية:", err);
+      }
+    }
+    fetchProducts();
+  }, []);
+
     {
       id: 1,
       name: "Creed Aventus (كريد أفينتوس)",
