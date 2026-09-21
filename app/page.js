@@ -1,49 +1,13 @@
 'use client';
-import { useState، useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const whatsappNumber = "9647751772000";
 
-    const SUPABASE_URL = "https://bqodbfoopkzbnysztdnp.supabase.co";
+  const SUPABASE_URL = "https://bqodbfoopkzbnysztdnp.supabase.co";
   const SUPABASE_KEY = "sb_publishable_GJJ7tpPrgW6Qg-YwTrayzQ_dYC2JJgm";
 
   const initialProducts = [
-    {
-      id: 1,
-      name: "Creed Aventus (كريد أفينتوس)",
-      category: "LENO",
-      badge: "توصيل مجاني لـ 30ml",
-      image: "https://iili.io/n3JiY4S.jpg",
-      sizes: [
-        { label: "10 مل", price: 5000, originalPrice: 7000 },
-        { label: "30 مل", price: 12000, originalPrice: 15000 }
-      ]
-    }
-  ];
-
-  const [products, setProducts] = useState(initialProducts);
-
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
-          headers: {
-            "apikey": SUPABASE_KEY,
-            "Authorization": `Bearer ${SUPABASE_KEY}`
-          }
-        });
-        if (!res.ok) throw new Error("فشل الاتصال");
-        const data = await res.json();
-        if (data && data.length > 0) {
-          setProducts(data);
-        }
-      } catch (err) {
-        console.warn("استخدام البيانات الاحتياطية:", err);
-      }
-    }
-    fetchProducts();
-  }, []);
-
     {
       id: 1,
       name: "Creed Aventus (كريد أفينتوس)",
@@ -78,6 +42,29 @@ export default function Home() {
       ]
     }
   ];
+
+  const [products, setProducts] = useState(initialProducts);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        if (!res.ok) throw new Error("فشل الاتصال");
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setProducts(data);
+        }
+      } catch (err) {
+        console.warn("استخدام البيانات الاحتياطية:", err);
+      }
+    }
+    fetchProducts();
+  }, []);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
@@ -268,7 +255,7 @@ export default function Home() {
                   <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
                     <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#2d3732' }}>
-                      {p.sizes[0].price.toLocaleString()} IQD
+                      {p.sizes && p.sizes[0] ? p.sizes[0].price.toLocaleString() : 0} IQD
                     </span>
                   </div>
                 </div>
