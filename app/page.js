@@ -45,17 +45,25 @@ export default function Home() {
 
             let rawSizes = [];
             if (Array.isArray(item.sizes) && item.sizes.length > 0) {
-              rawSizes = item.sizes.map(s => ({
-                label: s.label || "الحجم القياسي",
-                price: Number(s.price) || 0,
-                originalPrice: s.originalPrice ? Number(s.originalPrice) : (s.original_price ? Number(s.original_price) : null)
-              }));
+              rawSizes = item.sizes.map(s => {
+                const currentPrice = s.discounted_price ? Number(s.discounted_price) : (Number(s.price) || 0);
+                const origPrice = s.original_price ? Number(s.original_price) : null;
+                return {
+                  label: s.label || "الحجم القياسي",
+                  price: currentPrice,
+                  originalPrice: origPrice
+                };
+              });
             } else {
+              // قراءة السعر المخفض والسعر الأصلي المباشرة من الجدول
+              const currentPrice = item.discounted_price ? Number(item.discounted_price) : (Number(item.price) || 0);
+              const origPrice = item.original_price ? Number(item.original_price) : null;
+              
               rawSizes = [
                 { 
                   label: item.size_label || "30 مل", 
-                  price: Number(item.price) || 0, 
-                  originalPrice: item.original_price ? Number(item.original_price) : null
+                  price: currentPrice, 
+                  originalPrice: origPrice
                 }
               ];
             }
@@ -316,7 +324,7 @@ export default function Home() {
 
             <h2 style={{ margin: '0 0 10px 0', fontSize: '1.3rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
-            {/* عرض السعر والخصم المشطوب */}
+            {/* عرض السعر والخصم المشطوب داخل المودال */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
               <span style={{ fontSize: '1.6rem', fontWeight: '900', color: '#2d3732' }}>
                 {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()} IQD
@@ -328,7 +336,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* شريط التوصيل المجاني يظهر حصراً وخاصة للخيار ذو السعر الأعلى في هذا العطر */}
+            {/* شريط التوصيل المجاني يظهر حصراً للخيار ذو السعر الأعلى في هذا العطر */}
             {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
               <div style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '15px', border: '1px solid #bbf7d0' }}>
                 🚚 يشمل توصيل مجاني لهذا الخيار!
