@@ -56,22 +56,40 @@ export default function Home() {
         });
         if (!res.ok) throw new Error("فشل الاتصال");
         const data = await res.json();
-                if (data && data.length > 0) {
-          const formattedProducts = data.map(item => ({
-            id: item.id,
-            name: item.name || "عطر بدون اسم",
-            category: item.category || "LENO",
-            badge: item.badge || null,
-            image: item.image || "https://iili.io/n3JiY4S.jpg",
-            sizes: Array.isArray(item.sizes) ? item.sizes : [
-              { 
-                label: item.size_label || "30 مل", 
-                price: Number(item.price) || 10000, 
-                originalPrice: item.original_price ? Number(item.original_price) : null,
-                freeDelivery: Boolean(item.free_delivery) 
-              }
-            ]
-          }));
+        if (data && data.length > 0) {
+          const formattedProducts = data.map(item => {
+            // معالجة جلب الصورة سواء كانت نص أو مصفوفة
+            let imageUrl = "https://iili.io/n3JiY4S.jpg";
+            if (Array.isArray(item.image) && item.image.length > 0) {
+              imageUrl = item.image[0];
+            } else if (typeof item.image === 'string' && item.image.trim() !== '') {
+              imageUrl = item.image;
+            }
+
+            // فحص التوصيل المجاني بناءً على الفئة أو العمود
+            const isCategoryOriginal = item.category === "Original";
+            const isFreeDelivery = Boolean(item.free_delivery) || isCategoryOriginal;
+
+            // ضبط الأسعار والأحجام من أعمدة Supabase مباشرة
+            const mainPrice = Number(item.discounted_price) || Number(item.price) || Number(item.original_price) || 10000;
+            const originalPriceVal = item.discounted_price && item.original_price ? Number(item.original_price) : null;
+
+            return {
+              id: item.id,
+              name: item.name || "عطر بدون اسم",
+              category: item.category || "LENO",
+              badge: item.badge || (isCategoryOriginal ? "Original 100% ✨" : null),
+              image: imageUrl,
+              sizes: Array.isArray(item.sizes) && item.sizes.length > 0 ? item.sizes : [
+                { 
+                  label: item.size_label || "الحجم القياسي", 
+                  price: mainPrice, 
+                  originalPrice: originalPriceVal,
+                  freeDelivery: isFreeDelivery
+                }
+              ]
+            };
+          });
           setProducts(formattedProducts);
         }
 
@@ -257,26 +275,36 @@ export default function Home() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-            {filteredProducts.map((p) => (
-              <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
-                {p.badge && (
-                  <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#2d3732', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
-                    {p.badge}
-                  </span>
-                )}
-                <div style={{ width: '100%', height: '180px', backgroundColor: '#f9f9f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </div>
-                <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
-                  <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                    <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#2d3732' }}>
-                      {p.sizes && p.sizes[0] ? p.sizes[0].price.toLocaleString() : 0} IQD
+            {filteredProducts.map((p) => {
+              const firstSize = p.sizes && p.sizes[0] ? p.sizes[0] : null;
+              return (
+                <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+                  {p.badge && (
+                    <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#2d3732', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
+                      {p.badge}
                     </span>
+                  )}
+                  <div style={{ width: '100%', height: '180px', backgroundColor: '#f9f9f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </div>
+                  <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
+                    <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
+                    
+                    {/* عرض السعر مع الخصم إن وجد */}
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: '800', color: firstSize?.originalPrice ? '#b91c1c' : '#2d3732' }}>
+                        {firstSize ? firstSize.price.toLocaleString() : 0} IQD
+                      </span>
+                      {firstSize?.originalPrice && (
+                        <span style={{ fontSize: '0.75rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
+                          {firstSize.originalPrice.toLocaleString()} IQD
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
@@ -300,8 +328,9 @@ export default function Home() {
 
             <h2 style={{ margin: '0 0 10px 0', fontSize: '1.3rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
+            {/* السعر والخصم المباشر داخل النافذة */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: '900', color: '#2d3732' }}>
+              <span style={{ fontSize: '1.6rem', fontWeight: '900', color: selectedProduct.sizes[selectedSizeIndex].originalPrice ? '#b91c1c' : '#2d3732' }}>
                 {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()} IQD
               </span>
               {selectedProduct.sizes[selectedSizeIndex].originalPrice && (
@@ -311,7 +340,8 @@ export default function Home() {
               )}
             </div>
 
-            {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
+            {/* شريط التوصيل المجاني */}
+            {(selectedProduct.sizes[selectedSizeIndex].freeDelivery || selectedProduct.category === 'Original') && (
               <div style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '15px', border: '1px solid #bbf7d0' }}>
                 🚚 يشمل توصيل مجاني لهذا الخيار!
               </div>
@@ -319,9 +349,9 @@ export default function Home() {
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم أو العرض</label>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {selectedProduct.sizes.map((size, index) => (
-                  <button key={index} onClick={() => setSelectedSizeIndex(index)} style={{ flex: 1, padding: '12px 8px', borderRadius: '8px', border: selectedSizeIndex === index ? '2px solid #2d3732' : '1px solid #e4e4e7', backgroundColor: selectedSizeIndex === index ? '#2d3732' : '#fff', color: selectedSizeIndex === index ? '#fff' : '#18181b', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>
+                  <button key={index} onClick={() => setSelectedSizeIndex(index)} style={{ flex: 1, minWidth: '100px', padding: '12px 8px', borderRadius: '8px', border: selectedSizeIndex === index ? '2px solid #2d3732' : '1px solid #e4e4e7', backgroundColor: selectedSizeIndex === index ? '#2d3732' : '#fff', color: selectedSizeIndex === index ? '#fff' : '#18181b', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>
                     <div>{size.label}</div>
                     <div style={{ fontSize: '0.75rem', marginTop: '2px', opacity: 0.8 }}>{size.price.toLocaleString()} IQD</div>
                   </button>
