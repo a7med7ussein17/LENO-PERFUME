@@ -12,11 +12,11 @@ export default function Home() {
       id: 1,
       name: "Creed Aventus (كريد أفينتوس)",
       category: "LENO",
-      badge: "توصيل مجاني للحجم الكامل", 
+      badge: "خصم خاص", 
       image: "https://iili.io/n3JiY4S.jpg",
       sizes: [
-        { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
-        { label: "200 مل", price: 60000, originalPrice: null, freeDelivery: true }
+        { label: "10 مل", price: 5000, originalPrice: null },
+        { label: "200 مل", price: 60000, originalPrice: 75000 }
       ]
     }
   ];
@@ -43,33 +43,31 @@ export default function Home() {
               imageUrl = item.image;
             }
 
-            // فحص الأحجام المقبولة من Supabase
-            let parsedSizes = [];
+            let rawSizes = [];
             if (Array.isArray(item.sizes) && item.sizes.length > 0) {
-              parsedSizes = item.sizes.map(s => {
-                // فحص إذا كان الحجم هو الفئة الكاملة (200ml أو "المجموعة كاملة")
-                const labelText = String(s.label || '').toLowerCase();
-                const isFullPackage = labelText.includes('200') || labelText.includes('كامل') || Boolean(s.freeDelivery);
-
-                return {
-                  label: s.label || "الحجم القياسي",
-                  price: Number(s.price) || 10000,
-                  originalPrice: s.originalPrice ? Number(s.originalPrice) : null,
-                  freeDelivery: isFullPackage // التوصيل مجاني فقط للحجم الكامل
-                };
-              });
+              rawSizes = item.sizes.map(s => ({
+                label: s.label || "الحجم القياسي",
+                price: Number(s.price) || 0,
+                originalPrice: s.originalPrice ? Number(s.originalPrice) : (s.original_price ? Number(s.original_price) : null)
+              }));
             } else {
-              // إذا لم تكن الأحجام مصفوفة في Supabase
-              const isFullSize = String(item.size_label || '').includes('200') || String(item.size_label || '').includes('كامل');
-              parsedSizes = [
+              rawSizes = [
                 { 
                   label: item.size_label || "30 مل", 
-                  price: Number(item.price) || 10000, 
-                  originalPrice: item.original_price ? Number(item.original_price) : null,
-                  freeDelivery: isFullSize
+                  price: Number(item.price) || 0, 
+                  originalPrice: item.original_price ? Number(item.original_price) : null
                 }
               ];
             }
+
+            // تحديد السعر الأقصى (الأعلى) بين كل الأحجام الخاصة بهذا العطر
+            const maxPrice = Math.max(...rawSizes.map(s => s.price));
+
+            // تحديد التوصيل المجاني فقط للسعر الأعلى (الفئة الكاملة)
+            const parsedSizes = rawSizes.map(s => ({
+              ...s,
+              freeDelivery: s.price > 0 && s.price === maxPrice
+            }));
 
             return {
               id: item.id,
@@ -280,11 +278,16 @@ export default function Home() {
                   <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
                     <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
                     
-                    {/* عرض السعر */}
+                    {/* عرض السعر والخصم المشطوب في البطاقة الأساسية */}
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#2d3732' }}>
                         {firstSize ? firstSize.price.toLocaleString() : 0} IQD
                       </span>
+                      {firstSize && firstSize.originalPrice && (
+                        <span style={{ fontSize: '0.75rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
+                          {firstSize.originalPrice.toLocaleString()} IQD
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -313,7 +316,7 @@ export default function Home() {
 
             <h2 style={{ margin: '0 0 10px 0', fontSize: '1.3rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
-            {/* السعر والخصم */}
+            {/* عرض السعر والخصم المشطوب */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
               <span style={{ fontSize: '1.6rem', fontWeight: '900', color: '#2d3732' }}>
                 {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()} IQD
@@ -325,7 +328,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* شريط التوصيل المجاني يظهر حتتتتصررراً إذا كان الخيار المحدد هو الفئة الكاملة */}
+            {/* شريط التوصيل المجاني يظهر حصراً وخاصة للخيار ذو السعر الأعلى في هذا العطر */}
             {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
               <div style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '15px', border: '1px solid #bbf7d0' }}>
                 🚚 يشمل توصيل مجاني لهذا الخيار!
