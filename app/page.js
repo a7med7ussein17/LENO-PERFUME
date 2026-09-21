@@ -43,22 +43,18 @@ export default function Home() {
               imageUrl = item.image;
             }
 
+            // قراءة السعر بعد الخصم والسعر الأصلي مباشرة
+            const currentPrice = item.discounted_price ? Number(item.discounted_price) : (Number(item.price) || Number(item.original_price) || 0);
+            const origPrice = item.discounted_price ? Number(item.original_price) : null;
+
             let rawSizes = [];
             if (Array.isArray(item.sizes) && item.sizes.length > 0) {
-              rawSizes = item.sizes.map(s => {
-                const currentPrice = s.discounted_price ? Number(s.discounted_price) : (Number(s.price) || 0);
-                const origPrice = s.original_price ? Number(s.original_price) : null;
-                return {
-                  label: s.label || "الحجم القياسي",
-                  price: currentPrice,
-                  originalPrice: origPrice
-                };
-              });
+              rawSizes = item.sizes.map(s => ({
+                label: s.label || "الحجم القياسي",
+                price: s.discounted_price ? Number(s.discounted_price) : (Number(s.price) || 0),
+                originalPrice: s.original_price ? Number(s.original_price) : null
+              }));
             } else {
-              // قراءة السعر المخفض والسعر الأصلي المباشرة من الجدول
-              const currentPrice = item.discounted_price ? Number(item.discounted_price) : (Number(item.price) || 0);
-              const origPrice = item.original_price ? Number(item.original_price) : null;
-              
               rawSizes = [
                 { 
                   label: item.size_label || "30 مل", 
@@ -68,10 +64,9 @@ export default function Home() {
               ];
             }
 
-            // تحديد السعر الأقصى (الأعلى) بين كل الأحجام الخاصة بهذا العطر
+            // تحديد السعر الأعلى بين الخيارات لربط التوصيل المجاني به
             const maxPrice = Math.max(...rawSizes.map(s => s.price));
 
-            // تحديد التوصيل المجاني فقط للسعر الأعلى (الفئة الكاملة)
             const parsedSizes = rawSizes.map(s => ({
               ...s,
               freeDelivery: s.price > 0 && s.price === maxPrice
@@ -286,7 +281,7 @@ export default function Home() {
                   <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
                     <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
                     
-                    {/* عرض السعر والخصم المشطوب في البطاقة الأساسية */}
+                    {/* عرض السعر والخصم المشطوب في الكارت الأساسي */}
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#2d3732' }}>
                         {firstSize ? firstSize.price.toLocaleString() : 0} IQD
@@ -316,55 +311,56 @@ export default function Home() {
             
             <div 
               onClick={() => setZoomedImage(selectedProduct.image)}
-              style={{ width: '100%', height: '260px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '15px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: '100%', height: '240px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '15px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <img src={selectedProduct.image} alt={selectedProduct.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
               <span style={{ position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem' }}>🔍 اضغط لتكبير الصورة</span>
             </div>
 
-            <h2 style={{ margin: '0 0 10px 0', fontSize: '1.3rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
+            <h2 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
-            {/* عرض السعر والخصم المشطوب داخل المودال */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: '900', color: '#2d3732' }}>
+            {/* عرض السعر والخصم المشطوب */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <span style={{ fontSize: '1.4rem', fontWeight: '900', color: '#2d3732' }}>
                 {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()} IQD
               </span>
               {selectedProduct.sizes[selectedSizeIndex].originalPrice && (
-                <span style={{ fontSize: '1.1rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
+                <span style={{ fontSize: '1rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
                   {(selectedProduct.sizes[selectedSizeIndex].originalPrice * quantity).toLocaleString()} IQD
                 </span>
               )}
             </div>
 
-            {/* شريط التوصيل المجاني يظهر حصراً للخيار ذو السعر الأعلى في هذا العطر */}
+            {/* شريط التوصيل المجاني - تصميم مدمج أنيق ومُتناسق */}
             {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
-              <div style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '15px', border: '1px solid #bbf7d0' }}>
-                🚚 يشمل توصيل مجاني لهذا الخيار!
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f0fdf4', color: '#166534', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700', marginBottom: '14px', width: 'fit-content', border: '1px solid #bbf7d0' }}>
+                <span>🚚</span>
+                <span>توصيل مجاني لهذا الخيار</span>
               </div>
             )}
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم أو العرض</label>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم أو العرض</label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {selectedProduct.sizes.map((size, index) => (
-                  <button key={index} onClick={() => setSelectedSizeIndex(index)} style={{ flex: 1, minWidth: '100px', padding: '12px 8px', borderRadius: '8px', border: selectedSizeIndex === index ? '2px solid #2d3732' : '1px solid #e4e4e7', backgroundColor: selectedSizeIndex === index ? '#2d3732' : '#fff', color: selectedSizeIndex === index ? '#fff' : '#18181b', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>
-                    <div>{size.label}</div>
-                    <div style={{ fontSize: '0.75rem', marginTop: '2px', opacity: 0.8 }}>{size.price.toLocaleString()} IQD</div>
+                  <button key={index} onClick={() => setSelectedSizeIndex(index)} style={{ flex: 1, minWidth: '90px', padding: '10px 6px', borderRadius: '8px', border: selectedSizeIndex === index ? '2px solid #2d3732' : '1px solid #e4e4e7', backgroundColor: selectedSizeIndex === index ? '#2d3732' : '#fff', color: selectedSizeIndex === index ? '#fff' : '#18181b', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.85rem' }}>{size.label}</div>
+                    <div style={{ fontSize: '0.7rem', marginTop: '2px', opacity: 0.8 }}>{size.price.toLocaleString()} IQD</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div style={{ marginBottom: '25px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#3f3f46' }}>العدد</span>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e4e4e7', borderRadius: '8px', overflow: 'hidden' }}>
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '40px', height: '40px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer' }}>-</button>
-                <span style={{ width: '45px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.1rem' }}>{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} style={{ width: '40px', height: '40px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer' }}>+</button>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>-</button>
+                <span style={{ width: '40px', textAlign: 'center', fontWeight: 'bold', fontSize: '1rem' }}>{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>+</button>
               </div>
             </div>
 
-            <button onClick={addToCart} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '16px', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>
+            <button onClick={addToCart} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer' }}>
               إضافة إلى السلة 🛒
             </button>
           </div>
