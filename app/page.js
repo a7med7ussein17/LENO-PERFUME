@@ -56,9 +56,25 @@ export default function Home() {
         });
         if (!res.ok) throw new Error("فشل الاتصال");
         const data = await res.json();
-        if (data && data.length > 0) {
-          setProducts(data);
+                if (data && data.length > 0) {
+          const formattedProducts = data.map(item => ({
+            id: item.id,
+            name: item.name || "عطر بدون اسم",
+            category: item.category || "LENO",
+            badge: item.badge || null,
+            image: item.image || "https://iili.io/n3JiY4S.jpg",
+            sizes: Array.isArray(item.sizes) ? item.sizes : [
+              { 
+                label: item.size_label || "30 مل", 
+                price: Number(item.price) || 10000, 
+                originalPrice: item.original_price ? Number(item.original_price) : null,
+                freeDelivery: Boolean(item.free_delivery) 
+              }
+            ]
+          }));
+          setProducts(formattedProducts);
         }
+
       } catch (err) {
         console.warn("استخدام البيانات الاحتياطية:", err);
       }
