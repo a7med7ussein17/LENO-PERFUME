@@ -1,372 +1,384 @@
-'use client'
-import React, { useState } from 'react'
-import { ShoppingBag, Search, Menu, X, MessageCircle } from 'lucide-react'
+'use client';
+import { useState } from 'react';
 
 export default function Home() {
-  const [cart, setCart] = useState([])
-  const [isCartOpen, setIsCartOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('ALL')
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const whatsappNumber = "9647751772000";
 
   const products = [
     {
       id: 1,
-      name: "Creed Aventus (كريد أفسنتوس)",
+      name: "Creed Aventus (كريد أفينتوس)",
       category: "LENO",
-      badge: "توصيل مجاني 🚚",
+      badge: "توصيل مجاني لـ 30ml", 
       image: "https://iili.io/n3JiY4S.jpg",
       sizes: [
-        { size: "100 ml", price: 12000, originalPrice: 15000 },
-        { size: "50 ml", price: 7000, originalPrice: 9000 }
-      ],
-      description: "عطر فاخر يمزج بين الفواكه والأخشاب مع لمسات من الأناناس والبرغموت والمسك النقي."
+        { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
+        { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
+      ]
     },
     {
       id: 2,
-      name: "Sauvage Dior (سوفاج ديور)",
+      name: "Imagination - Louis Vuitton (إيماجينشين)",
       category: "LENO",
-      badge: "الأكثر مبيعاً 🔥",
-      image: "https://iili.io/n3JiY4S.jpg",
+      badge: "توصيل مجاني لـ 30ml", 
+      image: "https://iili.io/n3JOfqb.jpg",
       sizes: [
-        { size: "100 ml", price: 12000, originalPrice: 15000 },
-        { size: "50 ml", price: 7000, originalPrice: 9000 }
-      ],
-      description: "نفحات منعشة من البرغموت مع لمسات من الفلفل الأسود والأخشاب دافئة وقوية."
+        { label: "10 مل", price: 10000, originalPrice: null, freeDelivery: false },
+        { label: "30 مل", price: 23000, originalPrice: 25000, freeDelivery: true }
+      ]
     },
     {
       id: 3,
-      name: "Baccarat Rouge 540 (باكارات روج)",
+      name: "مجموعة التوباكو من إبراق",
       category: "Original",
-      badge: "مميز ✨",
-      image: "https://iili.io/n3JiY4S.jpg",
+      badge: "Original 100% ✨", 
+      image: "https://iili.io/nqnsfvp.jpg",
       sizes: [
-        { size: "100 ml", price: 15000, originalPrice: 18000 },
-        { size: "50 ml", price: 9000, originalPrice: 11000 }
-      ],
-      description: "عطر ساحر يجمع بين العنبر الخشب والأزهار الراقية مع نفحات الياسمين والزعفران."
+        { label: "قطعة واحدة (20 مل)", price: 15000, originalPrice: null, freeDelivery: false },
+        { label: "المجموعة كاملة", price: 85000, originalPrice: null, freeDelivery: true }
+      ]
     }
-  ]
+  ];
 
-  const [selectedSizes, setSelectedSizes] = useState(() => {
-    const initial = {}
-    products.forEach(p => {
-      initial[p.id] = p.sizes[0]
-    })
-    return initial
-  })
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [filterCategory, setFilterCategory] = useState("الكل");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    city: 'بغداد',
-    address: '',
-    notes: ''
-  })
+  const [zoomedImage, setZoomedImage] = useState(null);
 
-  const handleSizeChange = (productId, sizeObj) => {
-    setSelectedSizes(prev => ({
-      ...prev,
-      [productId]: sizeObj
-    }))
-  }
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addToCart = (product) => {
-    const currentSize = selectedSizes[product.id] || product.sizes[0]
-    const itemKey = `${product.id}-${currentSize.size}`
+  const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const cartTotalPrice = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+  const openProduct = (product) => {
+    setSelectedProduct(product);
+    setSelectedSizeIndex(0);
+    setQuantity(1);
+  };
+
+  const addToCart = () => {
+    if (!selectedProduct) return;
+    const currentSize = selectedProduct.sizes[selectedSizeIndex];
+    const cartItemId = `${selectedProduct.id}-${currentSize.label}`;
     
+    const newItem = {
+      cartItemId: cartItemId,
+      name: selectedProduct.name,
+      image: selectedProduct.image,
+      sizeLabel: currentSize.label,
+      price: currentSize.price,
+      freeDelivery: currentSize.freeDelivery,
+      quantity: quantity
+    };
+
     setCart(prevCart => {
-      const existing = prevCart.find(item => item.cartItemId === itemKey)
-      if (existing) {
+      const existingItem = prevCart.find(item => item.cartItemId === cartItemId);
+      if (existingItem) {
         return prevCart.map(item =>
-          item.cartItemId === itemKey ? { ...item, quantity: item.quantity + 1 } : item
-        )
+          item.cartItemId === cartItemId
+            ? { ...item, quantity: item.quantity + newItem.quantity }
+            : item
+        );
       }
-      return [...prevCart, { ...product, selectedSize: currentSize, quantity: 1, cartItemId: itemKey }]
-    })
-    setIsCartOpen(true)
-  }
+      return [...prevCart, newItem];
+    });
 
-  const updateQuantity = (cartItemId, delta) => {
-    setCart(prevCart => {
-      return prevCart.map(item => {
-        if (item.cartItemId === cartItemId) {
-          const newQty = item.quantity + delta
-          return newQty > 0 ? { ...item, quantity: newQty } : null
-        }
-        return item
-      }).filter(Boolean)
-    })
-  }
+    setSelectedProduct(null);
+    setIsCartOpen(true);
+  };
 
-  const totalAmount = cart.reduce((sum, item) => sum + (item.selectedSize.price * item.quantity), 0)
+  const removeFromCart = (cartItemId) => {
+    setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
+  };
 
-  const filteredProducts = products.filter(product => {
-    const matchesCategory = selectedCategory === 'ALL' || product.category === selectedCategory
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          product.description.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  const sendCartWhatsAppOrder = () => {
+    if (cart.length === 0) return;
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmitOrder = (e) => {
-    e.preventDefault()
-    if (!formData.name || !formData.phone || !formData.address) {
-      alert('يرجى إكمال جميع الحقول المطلوبة')
-      return
-    }
-
-    let itemsList = cart.map(item => `• ${item.name} (${item.selectedSize.size}) x${item.quantity} = ${(item.selectedSize.price * item.quantity).toLocaleString()} د.ع`).join('\n')
+    let text = `مرحباً LENO PERFUME 🌿\nأرغب بطلب المنتجات التالية:\n\n`;
     
-    let message = `🛍️ *طلب جديد من متجر لينو*\n\n`
-    message += `👤 *الاسم:* ${formData.name}\n`
-    message += `📞 *الهاتف:* ${formData.phone}\n`
-    message += `📍 *المحافظة:* ${formData.city}\n`
-    message += `🏠 *العنوان:* ${formData.address}\n`
-    if (formData.notes) message += `📝 *ملاحظات:* ${formData.notes}\n`
-    message += `\n📦 *المنتجات:*\n${itemsList}\n\n`
-    message += `💰 *الإجمالي:* ${totalAmount.toLocaleString()} د.ع`
+    cart.forEach((item, index) => {
+      const itemTotal = item.price * item.quantity;
+      const deliveryNote = item.freeDelivery ? " (توصيل مجاني 🚚)" : "";
+      text += `${index + 1}. ${item.name}\n`;
+      text += `- المقاس: ${item.sizeLabel}${deliveryNote}\n`;
+      text += `- العدد: ${item.quantity}\n`;
+      text += `- السعر: ${itemTotal.toLocaleString()} IQD\n\n`;
+    });
 
-    const whatsappUrl = `https://wa.me/9647700000000?text=${encodeURIComponent(message)}`
-    window.open(whatsappUrl, '_blank')
-    setCart([])
-  }
+    text += `ــــــــــــــــــــــــــــ\n`;
+    text += `المجموع الكلي: ${cartTotalPrice.toLocaleString()} IQD`;
+
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const filteredProducts = products.filter(p => {
+    const matchesCategory = filterCategory === "الكل" || p.category === filterCategory;
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans dir-rtl" dir="rtl" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
-      {/* Navbar */}
-      <nav className="sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden p-2 rounded-lg text-black">
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+    <div style={{ backgroundColor: '#fcfcfc', color: '#18181b', fontFamily: 'system-ui, -apple-system, sans-serif', direction: 'rtl', minHeight: '100vh', paddingBottom: '40px' }}>
+      
+      {/* شريط الملاحة */}
+      <nav style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid #f4f4f5' }}>
+        <div onClick={() => setIsMenuOpen(true)} style={{ cursor: 'pointer', color: '#3f3f46', display: 'flex', alignItems: 'center' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </div>
 
-            <div className="flex-1 flex justify-center md:justify-start items-center">
-              <span className="text-2xl font-black tracking-wider text-black font-serif">لينو</span>
-            </div>
+        <div style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '1px', color: '#18181b' }}>
+          لـينـو
+        </div>
 
-            <div className="flex items-center gap-3">
-              <button onClick={() => setIsCartOpen(true)} className="relative p-2 rounded-full hover:bg-gray-100 text-black transition">
-                <ShoppingBag size={22} />
-                {cart.length > 0 && (
-                  <span className="absolute top-0 right-0 bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                    {cart.reduce((a, b) => a + b.quantity, 0)}
-                  </span>
-                )}
-              </button>
-            </div>
+        <div style={{ display: 'flex', gap: '18px', alignItems: 'center', color: '#3f3f46' }}>
+          <div onClick={() => setIsSearchOpen(!isSearchOpen)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <div onClick={() => setIsCartOpen(true)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', position: 'relative' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            {cartItemsCount > 0 && (
+              <span style={{ position: 'absolute', top: '-5px', right: '-8px', backgroundColor: '#b91c1c', color: '#fff', fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {cartItemsCount}
+              </span>
+            )}
           </div>
         </div>
       </nav>
 
-      {/* Hero Banner */}
-      <header className="bg-black text-white py-12 px-4 text-center">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl sm:text-5xl font-extrabold mb-4">
-            عطرك.. بصمتك التي لا تُنسى.
-          </h1>
-          <p className="text-gray-300 text-sm sm:text-lg">
-            تشكيلة فاخرة من أجود العطور العالمية المجهزة بعناية فائقة لتناسب ذوقك الرفيع.
-          </p>
+      {/* حقل البحث */}
+      {isSearchOpen && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#fff', borderBottom: '1px solid #e4e4e7' }}>
+          <input
+            type="text"
+            placeholder="ابحث عن اسم العطر..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #d4d4d8', fontSize: '0.95rem', outline: 'none' }}
+          />
         </div>
-      </header>
+      )}
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white">
-        {/* Filter Categories */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-8">
-          <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
-            {['ALL', 'LENO', 'Original'].map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition ${
-                  selectedCategory === cat
-                    ? 'bg-black text-white'
-                    : 'bg-gray-100 border border-gray-300 text-black'
-                }`}
-              >
-                {cat === 'ALL' ? 'الكل' : cat}
-              </button>
+      {/* البانر */}
+      <div style={{ backgroundColor: '#2d3732', color: '#fff', textAlign: 'center', padding: '40px 20px', margin: '10px 16px', borderRadius: '16px' }}>
+        <h1 style={{ fontSize: '1.8rem', margin: '0 0 8px 0', fontWeight: '800' }}>عطرك.. بصمتك التي لا تُنسى.</h1>
+        <p style={{ fontSize: '0.9rem', color: '#e4e4e7', margin: 0 }}>اكتشف تشكيلة لينو الفاخرة الآن ➔</p>
+      </div>
+
+      {/* الفلترة */}
+      <div style={{ padding: '0 16px', marginTop: '25px', marginBottom: '15px' }}>
+        <h2 style={{ fontSize: '1.3rem', margin: '0 0 15px 0', fontWeight: '800' }}>التسوق حسب المجموعة</h2>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
+          {["الكل", "LENO", "Original"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilterCategory(cat)}
+              style={{
+                padding: '8px 18px',
+                borderRadius: '20px',
+                border: filterCategory === cat ? 'none' : '1px solid #e4e4e7',
+                backgroundColor: filterCategory === cat ? '#2d3732' : '#fff',
+                color: filterCategory === cat ? '#fff' : '#52525b',
+                fontWeight: '600',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* عرض المنتجات */}
+      <main style={{ padding: '0 16px' }}>
+        {filteredProducts.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#71717a' }}>
+            لا توجد عطور تطابق بحثك.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            {filteredProducts.map((p) => (
+              <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+                {p.badge && (
+                  <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#2d3732', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
+                    {p.badge}
+                  </span>
+                )}
+                <div style={{ width: '100%', height: '180px', backgroundColor: '#f9f9f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                </div>
+                <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
+                  <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                    <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#2d3732' }}>
+                      {p.sizes[0].price.toLocaleString()} IQD
+                    </span>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-
-          {/* Search Box */}
-          <div className="relative w-full sm:w-64">
-            <input
-              type="text"
-              placeholder="ابحث عن عطر..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-full text-sm bg-white text-black focus:outline-none"
-            />
-            <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
-          </div>
-        </div>
-
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map(product => {
-            const activeSize = selectedSizes[product.id] || product.sizes[0]
-
-            return (
-              <div key={product.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between overflow-hidden">
-                <div className="p-4">
-                  <div className="relative aspect-square rounded-xl bg-gray-100 overflow-hidden mb-4">
-                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                    {product.badge && (
-                      <span className="absolute top-3 right-3 bg-black text-white text-xs px-3 py-1 rounded-full">
-                        {product.badge}
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="font-bold text-lg text-black mb-1">{product.name}</h3>
-                  <p className="text-xs text-gray-600 mb-4">{product.description}</p>
-
-                  {/* Size Selector */}
-                  <div className="mb-4">
-                    <label className="text-xs text-gray-500 block mb-1">اختر الحجم:</label>
-                    <div className="flex gap-2">
-                      {product.sizes.map((sObj) => (
-                        <button
-                          key={sObj.size}
-                          onClick={() => handleSizeChange(product.id, sObj)}
-                          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold border transition ${
-                            activeSize.size === sObj.size
-                              ? 'border-black bg-black text-white'
-                              : 'border-gray-300 bg-gray-50 text-black'
-                          }`}
-                        >
-                          {sObj.size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Price Display */}
-                  <div className="flex items-baseline gap-2 mb-4">
-                    <span className="text-xl font-black text-black">
-                      {activeSize.price.toLocaleString()} د.ع
-                    </span>
-                    {activeSize.originalPrice && (
-                      <span className="text-xs text-gray-400 line-through">
-                        {activeSize.originalPrice.toLocaleString()} د.ع
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4 pt-0">
-                  <button
-                    onClick={() => addToCart(product)}
-                    className="w-full bg-black text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
-                  >
-                    <ShoppingBag size={16} />
-                    إضافة للسلة
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        )}
       </main>
 
-      {/* Cart Drawer */}
-      {isCartOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsCartOpen(false)} />
-          <div className="fixed inset-y-0 left-0 max-w-full flex">
-            <div className="w-screen max-w-md bg-white text-black shadow-xl flex flex-col justify-between">
-              
-              <div className="p-4 border-b flex items-center justify-between">
-                <h2 className="text-lg font-bold text-black">سلة التسوق ({cart.length})</h2>
-                <button onClick={() => setIsCartOpen(false)} className="p-2 text-black">
-                  <X size={20} />
-                </button>
-              </div>
+      {/* نافذة تفاصيل العطر */}
+      {selectedProduct && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 100 }}>
+          <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '90vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', overflowY: 'auto', direction: 'rtl' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <span style={{ fontSize: '0.85rem', color: '#71717a' }}>تفاصيل العطر</span>
+              <button onClick={() => setSelectedProduct(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
+            </div>
+            
+            <div 
+              onClick={() => setZoomedImage(selectedProduct.image)}
+              style={{ width: '100%', height: '260px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '15px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <img src={selectedProduct.image} alt={selectedProduct.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              <span style={{ position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem' }}>🔍 اضغط لتكبير الصورة</span>
+            </div>
 
-              <div className="p-4 flex-1 overflow-y-auto space-y-4 bg-white">
-                {cart.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <ShoppingBag size={48} className="mx-auto mb-3 opacity-30" />
-                    السلة فارغة حالياً
-                  </div>
-                ) : (
-                  cart.map(item => (
-                    <div key={item.cartItemId} className="flex gap-4 border-b pb-4 items-center">
-                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover bg-gray-100" />
-                      <div className="flex-1">
-                        <h4 className="font-bold text-sm text-black">{item.name}</h4>
-                        <span className="text-xs text-gray-500 block">{item.selectedSize.size}</span>
-                        <span className="text-xs font-bold text-black block mt-1">
-                          {item.selectedSize.price.toLocaleString()} د.ع
-                        </span>
+            <h2 style={{ margin: '0 0 10px 0', fontSize: '1.3rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+              <span style={{ fontSize: '1.6rem', fontWeight: '900', color: '#2d3732' }}>
+                {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()} IQD
+              </span>
+              {selectedProduct.sizes[selectedSizeIndex].originalPrice && (
+                <span style={{ fontSize: '1.1rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
+                  {(selectedProduct.sizes[selectedSizeIndex].originalPrice * quantity).toLocaleString()} IQD
+                </span>
+              )}
+            </div>
+
+            {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
+              <div style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '15px', border: '1px solid #bbf7d0' }}>
+                🚚 يشمل توصيل مجاني لهذا الخيار!
+              </div>
+            )}
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم أو العرض</label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {selectedProduct.sizes.map((size, index) => (
+                  <button key={index} onClick={() => setSelectedSizeIndex(index)} style={{ flex: 1, padding: '12px 8px', borderRadius: '8px', border: selectedSizeIndex === index ? '2px solid #2d3732' : '1px solid #e4e4e7', backgroundColor: selectedSizeIndex === index ? '#2d3732' : '#fff', color: selectedSizeIndex === index ? '#fff' : '#18181b', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>
+                    <div>{size.label}</div>
+                    <div style={{ fontSize: '0.75rem', marginTop: '2px', opacity: 0.8 }}>{size.price.toLocaleString()} IQD</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '25px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#3f3f46' }}>العدد</span>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e4e4e7', borderRadius: '8px', overflow: 'hidden' }}>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '40px', height: '40px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer' }}>-</button>
+                <span style={{ width: '45px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.1rem' }}>{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} style={{ width: '40px', height: '40px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer' }}>+</button>
+              </div>
+            </div>
+
+            <button onClick={addToCart} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '16px', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>
+              إضافة إلى السلة 🛒
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة تكبير الصورة (Full Screen Lightbox) */}
+      {zoomedImage && (
+        <div onClick={() => setZoomedImage(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <button onClick={() => setZoomedImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', color: '#fff', background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer' }}>✕</button>
+          <img src={zoomedImage} alt="عطر زوم" style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: '8px' }} />
+        </div>
+      )}
+
+      {/* نافذة السلة */}
+      {isCartOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 200 }}>
+          <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '85vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', display: 'flex', flexDirection: 'column', direction: 'rtl' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e4e4e7', paddingBottom: '15px', marginBottom: '15px' }}>
+              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800' }}>سلة المشتريات ({cartItemsCount})</h2>
+              <button onClick={() => setIsCartOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#71717a' }}>✕</button>
+            </div>
+            <div style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '10px' }}>
+              {cart.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#71717a', margin: '40px 0' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🛒</div>
+                  <p>السلة فارغة حالياً</p>
+                </div>
+              ) : (
+                cart.map(item => (
+                  <div key={item.cartItemId} style={{ display: 'flex', gap: '12px', marginBottom: '15px', borderBottom: '1px solid #f4f4f5', paddingBottom: '15px' }}>
+                    <img src={item.image} alt={item.name} style={{ width: '65px', height: '65px', borderRadius: '8px', objectFit: 'contain', backgroundColor: '#f9f9f9' }} />
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: '#18181b' }}>{item.name}</h4>
+                      <div style={{ fontSize: '0.8rem', color: '#52525b' }}>
+                        {item.sizeLabel} {item.freeDelivery && <span style={{ color: '#166534', fontWeight: 'bold' }}>(توصيل مجاني)</span>}
                       </div>
-                      <div className="flex items-center border rounded-lg overflow-hidden border-gray-300">
-                        <button onClick={() => updateQuantity(item.cartItemId, -1)} className="px-2 py-1 bg-gray-100 text-black">-</button>
-                        <span className="px-3 text-xs font-bold">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.cartItemId, 1)} className="px-2 py-1 bg-gray-100 text-black">+</button>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#2d3732' }}>{(item.price * item.quantity).toLocaleString()} IQD</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '0.8rem', color: '#71717a' }}>الكمية: {item.quantity}</span>
+                          <button onClick={() => removeFromCart(item.cartItemId)} style={{ background: 'none', border: 'none', color: '#b91c1c', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>حذف</button>
+                        </div>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-
-              {cart.length > 0 && (
-                <div className="p-4 border-t bg-gray-50">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm text-black">المجموع الكلي:</span>
-                    <span className="text-xl font-black text-black">{totalAmount.toLocaleString()} د.ع</span>
                   </div>
-                  
-                  <form onSubmit={handleSubmitOrder} className="space-y-3">
-                    <input
-                      type="text"
-                      name="name"
-                      placeholder="الاسم الكامل"
-                      required
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-black"
-                    />
-                    <input
-                      type="tel"
-                      name="phone"
-                      placeholder="رقم الهاتف"
-                      required
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-black"
-                    />
-                    <input
-                      type="text"
-                      name="address"
-                      placeholder="العنوان التفصيلي"
-                      required
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-black"
-                    />
-                    <button
-                      type="submit"
-                      className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm"
-                    >
-                      <MessageCircle size={18} />
-                      إرسال الطلب عبر الواتساب
-                    </button>
-                  </form>
-                </div>
+                ))
               )}
+            </div>
+            {cart.length > 0 && (
+              <div style={{ borderTop: '1px solid #e4e4e7', paddingTop: '15px', marginTop: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontWeight: '900', fontSize: '1.1rem', color: '#18181b' }}>
+                  <span>المجموع الكلي:</span>
+                  <span>{cartTotalPrice.toLocaleString()} IQD</span>
+                </div>
+                <button onClick={sendCartWhatsAppOrder} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '16px', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>
+                  إتمام الطلب (واتساب) 💬
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* القائمة الجانبية */}
+      {isMenuOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', justifyContent: 'flex-start' }}>
+          <div style={{ width: '75%', maxWidth: '300px', backgroundColor: '#fff', height: '100%', padding: '24px 20px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f4f4f5', paddingBottom: '15px' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: '900', color: '#2d3732' }}>لـينـو 🌿</div>
+              <button onClick={() => setIsMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '1rem', fontWeight: '600', color: '#27272a' }}>
+              <div onClick={() => setIsMenuOpen(false)} style={{ cursor: 'pointer' }}>الرئيسية 🏠</div>
+              <div onClick={() => { setFilterCategory("LENO"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور LENO 🧪</div>
+              <div onClick={() => { setFilterCategory("Original"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور Original ✨</div>
+              <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>تواصل معنا (واتساب) 💬</a>
             </div>
           </div>
         </div>
       )}
+
     </div>
-  )
+  );
 }
