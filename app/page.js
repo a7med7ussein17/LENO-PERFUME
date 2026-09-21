@@ -16,7 +16,7 @@ export default function Home() {
       image: "https://iili.io/n3JiY4S.jpg",
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null },
-        { label: "200 مل", price: 60000, originalPrice: 75000 }
+        { label: "35 مل", price: 13000, originalPrice: 17000 }
       ]
     }
   ];
@@ -43,28 +43,44 @@ export default function Home() {
               imageUrl = item.image;
             }
 
-            // قراءة السعر بعد الخصم والسعر الأصلي مباشرة
-            const currentPrice = item.discounted_price ? Number(item.discounted_price) : (Number(item.price) || Number(item.original_price) || 0);
-            const origPrice = item.discounted_price ? Number(item.original_price) : null;
+            // قراءة السعر الرئيسي والسعر الأصلي العام من المنتج
+            const itemOriginalPrice = item.original_price ? Number(item.original_price) : null;
+            const itemDiscountedPrice = item.discounted_price ? Number(item.discounted_price) : null;
 
             let rawSizes = [];
             if (Array.isArray(item.sizes) && item.sizes.length > 0) {
-              rawSizes = item.sizes.map(s => ({
-                label: s.label || "الحجم القياسي",
-                price: s.discounted_price ? Number(s.discounted_price) : (Number(s.price) || 0),
-                originalPrice: s.original_price ? Number(s.original_price) : null
-              }));
+              rawSizes = item.sizes.map(s => {
+                let sizePrice = Number(s.price) || 0;
+                let sizeOrigPrice = s.original_price ? Number(s.original_price) : null;
+
+                // إذا كان الخصم موجوداً على مستوى العطر ككل، نطبقه على الحجم الذي يطابق السعر الأصلي أو السعر المخفض
+                if (!sizeOrigPrice && itemOriginalPrice) {
+                  if (itemDiscountedPrice && sizePrice === itemDiscountedPrice) {
+                    sizeOrigPrice = itemOriginalPrice;
+                  } else if (sizePrice === itemOriginalPrice && itemDiscountedPrice) {
+                    sizePrice = itemDiscountedPrice;
+                    sizeOrigPrice = itemOriginalPrice;
+                  }
+                }
+
+                return {
+                  label: s.label || "الحجم القياسي",
+                  price: sizePrice,
+                  originalPrice: sizeOrigPrice
+                };
+              });
             } else {
+              const currentPrice = itemDiscountedPrice || Number(item.price) || 0;
               rawSizes = [
                 { 
                   label: item.size_label || "30 مل", 
                   price: currentPrice, 
-                  originalPrice: origPrice
+                  originalPrice: itemOriginalPrice
                 }
               ];
             }
 
-            // تحديد السعر الأعلى بين الخيارات لربط التوصيل المجاني به
+            // تحديد السعر الأعلى لإعطائه توصيل مجاني
             const maxPrice = Math.max(...rawSizes.map(s => s.price));
 
             const parsedSizes = rawSizes.map(s => ({
@@ -281,12 +297,11 @@ export default function Home() {
                   <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
                     <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
                     
-                    {/* عرض السعر والخصم المشطوب في الكارت الأساسي */}
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#2d3732' }}>
                         {firstSize ? firstSize.price.toLocaleString() : 0} IQD
                       </span>
-                      {firstSize && firstSize.originalPrice && (
+                      {firstSize && firstSize.originalPrice && firstSize.originalPrice > firstSize.price && (
                         <span style={{ fontSize: '0.75rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
                           {firstSize.originalPrice.toLocaleString()} IQD
                         </span>
@@ -319,19 +334,19 @@ export default function Home() {
 
             <h2 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
-            {/* عرض السعر والخصم المشطوب */}
+            {/* عرض السعر الحالي والسعر المشطوب إذا وُجد خصم */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <span style={{ fontSize: '1.4rem', fontWeight: '900', color: '#2d3732' }}>
-                {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()} IQD
+                IQD {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()}
               </span>
-              {selectedProduct.sizes[selectedSizeIndex].originalPrice && (
+              {selectedProduct.sizes[selectedSizeIndex].originalPrice && selectedProduct.sizes[selectedSizeIndex].originalPrice > selectedProduct.sizes[selectedSizeIndex].price && (
                 <span style={{ fontSize: '1rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
-                  {(selectedProduct.sizes[selectedSizeIndex].originalPrice * quantity).toLocaleString()} IQD
+                  IQD {(selectedProduct.sizes[selectedSizeIndex].originalPrice * quantity).toLocaleString()}
                 </span>
               )}
             </div>
 
-            {/* شريط التوصيل المجاني - تصميم مدمج أنيق ومُتناسق */}
+            {/* شريط التوصيل المجاني */}
             {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f0fdf4', color: '#166534', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700', marginBottom: '14px', width: 'fit-content', border: '1px solid #bbf7d0' }}>
                 <span>🚚</span>
@@ -345,7 +360,7 @@ export default function Home() {
                 {selectedProduct.sizes.map((size, index) => (
                   <button key={index} onClick={() => setSelectedSizeIndex(index)} style={{ flex: 1, minWidth: '90px', padding: '10px 6px', borderRadius: '8px', border: selectedSizeIndex === index ? '2px solid #2d3732' : '1px solid #e4e4e7', backgroundColor: selectedSizeIndex === index ? '#2d3732' : '#fff', color: selectedSizeIndex === index ? '#fff' : '#18181b', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.85rem' }}>{size.label}</div>
-                    <div style={{ fontSize: '0.7rem', marginTop: '2px', opacity: 0.8 }}>{size.price.toLocaleString()} IQD</div>
+                    <div style={{ fontSize: '0.7rem', marginTop: '2px', opacity: 0.8 }}>IQD {size.price.toLocaleString()}</div>
                   </button>
                 ))}
               </div>
@@ -399,7 +414,7 @@ export default function Home() {
                         {item.sizeLabel} {item.freeDelivery && <span style={{ color: '#166534', fontWeight: 'bold' }}>(توصيل مجاني)</span>}
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#2d3732' }}>{(item.price * item.quantity).toLocaleString()} IQD</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#2d3732' }}>IQD {(item.price * item.quantity).toLocaleString()}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <span style={{ fontSize: '0.8rem', color: '#71717a' }}>الكمية: {item.quantity}</span>
                           <button onClick={() => removeFromCart(item.cartItemId)} style={{ background: 'none', border: 'none', color: '#b91c1c', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>حذف</button>
@@ -414,7 +429,7 @@ export default function Home() {
               <div style={{ borderTop: '1px solid #e4e4e7', paddingTop: '15px', marginTop: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontWeight: '900', fontSize: '1.1rem', color: '#18181b' }}>
                   <span>المجموع الكلي:</span>
-                  <span>{cartTotalPrice.toLocaleString()} IQD</span>
+                  <span>IQD {cartTotalPrice.toLocaleString()}</span>
                 </div>
                 <button onClick={sendCartWhatsAppOrder} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '16px', borderRadius: '10px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>
                   إتمام الطلب (واتساب) 💬
