@@ -12,33 +12,11 @@ export default function Home() {
       id: 1,
       name: "Creed Aventus (كريد أفينتوس)",
       category: "LENO",
-      badge: "توصيل مجاني لـ 30ml", 
+      badge: "توصيل مجاني للحجم الكامل", 
       image: "https://iili.io/n3JiY4S.jpg",
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null, freeDelivery: false },
-        { label: "30 مل", price: 12000, originalPrice: 15000, freeDelivery: true }
-      ]
-    },
-    {
-      id: 2,
-      name: "Imagination - Louis Vuitton (إيماجينشين)",
-      category: "LENO",
-      badge: "توصيل مجاني لـ 30ml", 
-      image: "https://iili.io/n3JOfqb.jpg",
-      sizes: [
-        { label: "10 مل", price: 10000, originalPrice: null, freeDelivery: false },
-        { label: "30 مل", price: 23000, originalPrice: 25000, freeDelivery: true }
-      ]
-    },
-    {
-      id: 3,
-      name: "مجموعة التوباكو من إبراق",
-      category: "Original",
-      badge: "Original 100% ✨", 
-      image: "https://iili.io/nqnsfvp.jpg",
-      sizes: [
-        { label: "قطعة واحدة (20 مل)", price: 15000, originalPrice: null, freeDelivery: false },
-        { label: "المجموعة كاملة", price: 85000, originalPrice: null, freeDelivery: true }
+        { label: "200 مل", price: 60000, originalPrice: null, freeDelivery: true }
       ]
     }
   ];
@@ -58,7 +36,6 @@ export default function Home() {
         const data = await res.json();
         if (data && data.length > 0) {
           const formattedProducts = data.map(item => {
-            // معالجة جلب الصورة سواء كانت نص أو مصفوفة
             let imageUrl = "https://iili.io/n3JiY4S.jpg";
             if (Array.isArray(item.image) && item.image.length > 0) {
               imageUrl = item.image[0];
@@ -66,28 +43,41 @@ export default function Home() {
               imageUrl = item.image;
             }
 
-            // فحص التوصيل المجاني بناءً على الفئة أو العمود
-            const isCategoryOriginal = item.category === "Original";
-            const isFreeDelivery = Boolean(item.free_delivery) || isCategoryOriginal;
+            // فحص الأحجام المقبولة من Supabase
+            let parsedSizes = [];
+            if (Array.isArray(item.sizes) && item.sizes.length > 0) {
+              parsedSizes = item.sizes.map(s => {
+                // فحص إذا كان الحجم هو الفئة الكاملة (200ml أو "المجموعة كاملة")
+                const labelText = String(s.label || '').toLowerCase();
+                const isFullPackage = labelText.includes('200') || labelText.includes('كامل') || Boolean(s.freeDelivery);
 
-            // ضبط الأسعار والأحجام من أعمدة Supabase مباشرة
-            const mainPrice = Number(item.discounted_price) || Number(item.price) || Number(item.original_price) || 10000;
-            const originalPriceVal = item.discounted_price && item.original_price ? Number(item.original_price) : null;
+                return {
+                  label: s.label || "الحجم القياسي",
+                  price: Number(s.price) || 10000,
+                  originalPrice: s.originalPrice ? Number(s.originalPrice) : null,
+                  freeDelivery: isFullPackage // التوصيل مجاني فقط للحجم الكامل
+                };
+              });
+            } else {
+              // إذا لم تكن الأحجام مصفوفة في Supabase
+              const isFullSize = String(item.size_label || '').includes('200') || String(item.size_label || '').includes('كامل');
+              parsedSizes = [
+                { 
+                  label: item.size_label || "30 مل", 
+                  price: Number(item.price) || 10000, 
+                  originalPrice: item.original_price ? Number(item.original_price) : null,
+                  freeDelivery: isFullSize
+                }
+              ];
+            }
 
             return {
               id: item.id,
               name: item.name || "عطر بدون اسم",
               category: item.category || "LENO",
-              badge: item.badge || (isCategoryOriginal ? "Original 100% ✨" : null),
+              badge: item.badge || null,
               image: imageUrl,
-              sizes: Array.isArray(item.sizes) && item.sizes.length > 0 ? item.sizes : [
-                { 
-                  label: item.size_label || "الحجم القياسي", 
-                  price: mainPrice, 
-                  originalPrice: originalPriceVal,
-                  freeDelivery: isFreeDelivery
-                }
-              ]
+              sizes: parsedSizes
             };
           });
           setProducts(formattedProducts);
@@ -290,16 +280,11 @@ export default function Home() {
                   <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
                     <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
                     
-                    {/* عرض السعر مع الخصم إن وجد */}
+                    {/* عرض السعر */}
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.95rem', fontWeight: '800', color: firstSize?.originalPrice ? '#b91c1c' : '#2d3732' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#2d3732' }}>
                         {firstSize ? firstSize.price.toLocaleString() : 0} IQD
                       </span>
-                      {firstSize?.originalPrice && (
-                        <span style={{ fontSize: '0.75rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
-                          {firstSize.originalPrice.toLocaleString()} IQD
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -328,9 +313,9 @@ export default function Home() {
 
             <h2 style={{ margin: '0 0 10px 0', fontSize: '1.3rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
-            {/* السعر والخصم المباشر داخل النافذة */}
+            {/* السعر والخصم */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: '900', color: selectedProduct.sizes[selectedSizeIndex].originalPrice ? '#b91c1c' : '#2d3732' }}>
+              <span style={{ fontSize: '1.6rem', fontWeight: '900', color: '#2d3732' }}>
                 {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()} IQD
               </span>
               {selectedProduct.sizes[selectedSizeIndex].originalPrice && (
@@ -340,8 +325,8 @@ export default function Home() {
               )}
             </div>
 
-            {/* شريط التوصيل المجاني */}
-            {(selectedProduct.sizes[selectedSizeIndex].freeDelivery || selectedProduct.category === 'Original') && (
+            {/* شريط التوصيل المجاني يظهر حتتتتصررراً إذا كان الخيار المحدد هو الفئة الكاملة */}
+            {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
               <div style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '15px', border: '1px solid #bbf7d0' }}>
                 🚚 يشمل توصيل مجاني لهذا الخيار!
               </div>
