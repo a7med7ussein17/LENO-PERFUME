@@ -30,19 +30,7 @@ export default function Home() {
     { name: "صلاح الدين (تكريت)", price: 5000 }
   ];
 
-  const initialProducts = [
-    {
-      id: 1,
-      name: "Creed Aventus (كريد أفينتوس)",
-      category: "LENO",
-      badge: "خصم خاص", 
-      image: "https://iili.io/n3JiY4S.jpg",
-      sizes: [
-        { label: "10 مل", price: 5000, originalPrice: null, available: true },
-        { label: "35 مل", price: 13000, originalPrice: 17000, available: false }
-      ]
-    }
-  ];
+  const initialProducts = [];
 
   const [products, setProducts] = useState(initialProducts);
 
@@ -69,11 +57,6 @@ export default function Home() {
             const itemOriginalPrice = item.original_price ? Number(item.original_price) : null;
             const itemDiscountedPrice = item.discounted_price ? Number(item.discounted_price) : null;
 
-            // فحص حالة التوفر للمنتج بشكل عام إن وجدت
-            const mainAvailable = item.available !== undefined ? Boolean(item.available) : 
-                                 (item.is_available !== undefined ? Boolean(item.is_available) : 
-                                 (item.stock_quantity !== undefined ? Number(item.stock_quantity) > 0 : true));
-
             let rawSizes = [];
             if (Array.isArray(item.sizes) && item.sizes.length > 0) {
               rawSizes = item.sizes.map(s => {
@@ -89,37 +72,41 @@ export default function Home() {
                   }
                 }
 
-                // تحديد حالة توفر هذا الحجم تحديداً
-                let isSizeAvailable = true;
+                // فحص كمية المخزون للحجم المكتوب في Supabase
+                // إذا كان هناك حقل stock أو quantity أو stock_quantity
+                let sizeStock = null;
+                if (s.stock !== undefined && s.stock !== null) sizeStock = Number(s.stock);
+                else if (s.quantity !== undefined && s.quantity !== null) sizeStock = Number(s.quantity);
+                else if (s.stock_quantity !== undefined && s.stock_quantity !== null) sizeStock = Number(s.stock_quantity);
 
-                if (s.available !== undefined) {
-                  isSizeAvailable = Boolean(s.available);
-                } else if (s.is_available !== undefined) {
-                  isSizeAvailable = Boolean(s.is_available);
-                } else if (s.stock !== undefined && s.stock !== null) {
-                  isSizeAvailable = Number(s.stock) > 0;
-                } else if (s.stock_quantity !== undefined && s.stock_quantity !== null) {
-                  isSizeAvailable = Number(s.stock_quantity) > 0;
-                } else if (s.quantity !== undefined && s.quantity !== null) {
-                  isSizeAvailable = Number(s.quantity) > 0;
-                } else {
-                  isSizeAvailable = mainAvailable;
+                // إذا جرى تحديد الكمية صراحةً، فإذا كانت 0 يعني نفذت الكمية
+                // إذا لم يتم كتابة حقل مخزون للحجم، سيعتبر متوفر افتراضياً
+                let isAvailable = true;
+                if (sizeStock !== null) {
+                  isAvailable = sizeStock > 0;
+                } else if (s.available !== undefined) {
+                  isAvailable = Boolean(s.available);
                 }
 
                 return {
                   label: s.label || s.size_label || "الحجم القياسي",
                   price: sizePrice,
                   originalPrice: sizeOrigPrice,
-                  available: isSizeAvailable
+                  stock: sizeStock,
+                  available: isAvailable
                 };
               });
             } else {
               const currentPrice = itemDiscountedPrice || Number(item.price) || 0;
+              const mainStock = item.stock_quantity !== undefined ? Number(item.stock_quantity) : (item.stock !== undefined ? Number(item.stock) : null);
+              const mainAvailable = mainStock !== null ? mainStock > 0 : (item.available !== undefined ? Boolean(item.available) : true);
+
               rawSizes = [
                 { 
                   label: item.size_label || "30 مل", 
                   price: currentPrice, 
                   originalPrice: itemOriginalPrice,
+                  stock: mainStock,
                   available: mainAvailable
                 }
               ];
@@ -145,7 +132,7 @@ export default function Home() {
         }
 
       } catch (err) {
-        console.warn("استخدام البيانات الاحتياطية:", err);
+        console.warn("خطأ في جلب البيانات:", err);
       }
     }
     fetchProducts();
@@ -180,7 +167,6 @@ export default function Home() {
 
   const openProduct = (product) => {
     setSelectedProduct(product);
-    // تحديد أول حجم متوفر افتراضياً
     const firstAvailableIndex = product.sizes.findIndex(s => s.available);
     setSelectedSizeIndex(firstAvailableIndex !== -1 ? firstAvailableIndex : 0);
     setQuantity(1);
@@ -360,7 +346,7 @@ export default function Home() {
       <main style={{ padding: '0 16px' }}>
         {filteredProducts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#71717a' }}>
-            لا توجد عطور تطابق بحثك.
+            جاري تحميل المنتجات...
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
@@ -472,7 +458,9 @@ export default function Home() {
                     >
                       <div style={{ fontSize: '0.85rem' }}>{size.label}</div>
                       {isAvailable ? (
-                        <div style={{ fontSize: '0.7rem', marginTop: '2px', opacity: 0.8 }}>IQD {size.price.toLocaleString()}</div>
+                        <div style={{ fontSize: '0.7rem', marginTop: '2px', opacity: 0.8 }}>
+                          {size.stock !== null ? `متبقي (${size.stock})` : `IQD ${size.price.toLocaleString()}`}
+                        </div>
                       ) : (
                         <div style={{ fontSize: '0.65rem', marginTop: '2px', color: isSelected ? '#fca5a5' : '#dc2626', fontWeight: 'bold' }}>نفذت الكمية</div>
                       )}
