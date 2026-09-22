@@ -38,8 +38,8 @@ export default function Home() {
       badge: "خصم خاص", 
       image: "https://iili.io/n3JiY4S.jpg",
       sizes: [
-        { label: "10 مل", price: 5000, originalPrice: null, available: true },
-        { label: "35 مل", price: 13000, originalPrice: 17000, available: true }
+        { label: "10 مل", price: 5000, originalPrice: null, stock: 5 },
+        { label: "35 مل", price: 13000, originalPrice: 17000, stock: 0 }
       ]
     }
   ];
@@ -66,6 +66,7 @@ export default function Home() {
               imageUrl = item.image;
             }
 
+            const mainStock = item.stock_quantity !== undefined && item.stock_quantity !== null ? Number(item.stock_quantity) : 10;
             const itemOriginalPrice = item.original_price ? Number(item.original_price) : null;
             const itemDiscountedPrice = item.discounted_price ? Number(item.discounted_price) : null;
 
@@ -84,26 +85,24 @@ export default function Home() {
                   }
                 }
 
-                // فحص توفر الحجم المخصص
-                const isAvailable = s.available !== undefined ? Boolean(s.available) : (s.stock === undefined || Number(s.stock) > 0);
+                // قراءة المخزون الخاص بالحجم إن وجد، أو الاعتماد على مخزون المنتج العام
+                const sizeStock = s.stock_quantity !== undefined ? Number(s.stock_quantity) : (s.stock !== undefined ? Number(s.stock) : mainStock);
 
                 return {
                   label: s.label || "الحجم القياسي",
                   price: sizePrice,
                   originalPrice: sizeOrigPrice,
-                  available: isAvailable
+                  stock: sizeStock
                 };
               });
             } else {
               const currentPrice = itemDiscountedPrice || Number(item.price) || 0;
-              const isAvailable = item.available !== undefined ? Boolean(item.available) : (item.stock_quantity === undefined || Number(item.stock_quantity) > 0);
-              
               rawSizes = [
                 { 
                   label: item.size_label || "30 مل", 
                   price: currentPrice, 
                   originalPrice: itemOriginalPrice,
-                  available: isAvailable
+                  stock: mainStock
                 }
               ];
             }
@@ -163,8 +162,8 @@ export default function Home() {
 
   const openProduct = (product) => {
     setSelectedProduct(product);
-    // البحث عن أول حجم متوفر لتقديمه كخيار افتراضي
-    const firstAvailableIndex = product.sizes.findIndex(s => s.available);
+    // تحديد أول حجم متوفر افتراضياً
+    const firstAvailableIndex = product.sizes.findIndex(s => s.stock > 0);
     setSelectedSizeIndex(firstAvailableIndex !== -1 ? firstAvailableIndex : 0);
     setQuantity(1);
   };
@@ -172,7 +171,7 @@ export default function Home() {
   const addToCart = () => {
     if (!selectedProduct) return;
     const currentSize = selectedProduct.sizes[selectedSizeIndex];
-    if (!currentSize || !currentSize.available) return;
+    if (!currentSize || currentSize.stock <= 0) return;
 
     const cartItemId = `${selectedProduct.id}-${currentSize.label}`;
     
@@ -349,7 +348,7 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
             {filteredProducts.map((p) => {
               const firstSize = p.sizes && p.sizes[0] ? p.sizes[0] : null;
-              const allSizesOutOfStock = p.sizes.every(s => !s.available);
+              const allSizesOutOfStock = p.sizes.every(s => s.stock <= 0);
 
               return (
                 <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -420,20 +419,20 @@ export default function Home() {
               )}
             </div>
 
-            {selectedProduct.sizes[selectedSizeIndex].available && selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
+            {selectedProduct.sizes[selectedSizeIndex].stock > 0 && selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f0fdf4', color: '#166534', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700', marginBottom: '14px', width: 'fit-content', border: '1px solid #bbf7d0' }}>
                 <span>🚚</span>
                 <span>توصيل مجاني لهذا الخيار</span>
               </div>
             )}
 
-            {/* خيارات الحجم متضمنة مؤشر "نفذت الكمية" بدون إيموجي */}
+            {/* أزرار اختيار الأحجام مع حالة نفاد الكمية الخاصة بـ كل حجم */}
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم أو العرض</label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {selectedProduct.sizes.map((size, index) => {
                   const isSelected = selectedSizeIndex === index;
-                  const isAvailable = size.available;
+                  const isAvailable = size.stock > 0;
 
                   return (
                     <button 
@@ -450,8 +449,7 @@ export default function Home() {
                         fontWeight: 'bold', 
                         cursor: 'pointer', 
                         textAlign: 'center',
-                        position: 'relative',
-                        opacity: isAvailable ? 1 : 0.7
+                        position: 'relative'
                       }}
                     >
                       <div style={{ fontSize: '0.85rem' }}>{size.label}</div>
@@ -466,18 +464,18 @@ export default function Home() {
               </div>
             </div>
 
-            {selectedProduct.sizes[selectedSizeIndex].available && (
+            {selectedProduct.sizes[selectedSizeIndex].stock > 0 && (
               <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#3f3f46' }}>العدد</span>
                 <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e4e4e7', borderRadius: '8px', overflow: 'hidden' }}>
                   <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>-</button>
                   <span style={{ width: '40px', textAlign: 'center', fontWeight: 'bold', fontSize: '1rem' }}>{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>+</button>
+                  <button onClick={() => setQuantity(Math.min(selectedProduct.sizes[selectedSizeIndex].stock, quantity + 1))} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>+</button>
                 </div>
               </div>
             )}
 
-            {selectedProduct.sizes[selectedSizeIndex].available ? (
+            {selectedProduct.sizes[selectedSizeIndex].stock > 0 ? (
               <button onClick={addToCart} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer' }}>
                 إضافة إلى السلة 🛒
               </button>
