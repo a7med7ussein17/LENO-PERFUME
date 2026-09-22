@@ -72,15 +72,11 @@ export default function Home() {
                   }
                 }
 
-                // فحص كمية المخزون للحجم المكتوب في Supabase
-                // إذا كان هناك حقل stock أو quantity أو stock_quantity
                 let sizeStock = null;
                 if (s.stock !== undefined && s.stock !== null) sizeStock = Number(s.stock);
                 else if (s.quantity !== undefined && s.quantity !== null) sizeStock = Number(s.quantity);
                 else if (s.stock_quantity !== undefined && s.stock_quantity !== null) sizeStock = Number(s.stock_quantity);
 
-                // إذا جرى تحديد الكمية صراحةً، فإذا كانت 0 يعني نفذت الكمية
-                // إذا لم يتم كتابة حقل مخزون للحجم، سيعتبر متوفر افتراضياً
                 let isAvailable = true;
                 if (sizeStock !== null) {
                   isAvailable = sizeStock > 0;
@@ -92,7 +88,6 @@ export default function Home() {
                   label: s.label || s.size_label || "الحجم القياسي",
                   price: sizePrice,
                   originalPrice: sizeOrigPrice,
-                  stock: sizeStock,
                   available: isAvailable
                 };
               });
@@ -106,7 +101,6 @@ export default function Home() {
                   label: item.size_label || "30 مل", 
                   price: currentPrice, 
                   originalPrice: itemOriginalPrice,
-                  stock: mainStock,
                   available: mainAvailable
                 }
               ];
@@ -459,7 +453,7 @@ export default function Home() {
                       <div style={{ fontSize: '0.85rem' }}>{size.label}</div>
                       {isAvailable ? (
                         <div style={{ fontSize: '0.7rem', marginTop: '2px', opacity: 0.8 }}>
-                          {size.stock !== null ? `متبقي (${size.stock})` : `IQD ${size.price.toLocaleString()}`}
+                          IQD {size.price.toLocaleString()}
                         </div>
                       ) : (
                         <div style={{ fontSize: '0.65rem', marginTop: '2px', color: isSelected ? '#fca5a5' : '#dc2626', fontWeight: 'bold' }}>نفذت الكمية</div>
