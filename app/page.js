@@ -7,7 +7,6 @@ export default function Home() {
   const SUPABASE_URL = "https://bqodbfoopkzbnysztdnp.supabase.co";
   const SUPABASE_KEY = "sb_publishable_GJJ7tpPrgW6Qg-YwTrayzQ_dYC2JJgm";
 
-  // قائمة المحافظات مع تعديل اسم زاخو
   const provincesDelivery = [
     { name: "دهوك", price: 3000 },
     { name: "زاخو", price: 4000 },
@@ -141,7 +140,6 @@ export default function Home() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // اختيار المحافظة والبيانات الشخصية
   const [selectedProvince, setSelectedProvince] = useState(provincesDelivery[0].name);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -239,8 +237,8 @@ export default function Home() {
   return (
     <div style={{ backgroundColor: '#fcfcfc', color: '#18181b', fontFamily: 'system-ui, -apple-system, sans-serif', direction: 'rtl', minHeight: '100vh', paddingBottom: '40px' }}>
       
-      {/* شريط الملاحة */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid #f4f4f5' }}>
+      {/* شريط الملاحة متناسق */}
+      <nav style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #f4f4f5' }}>
         <div onClick={() => setIsMenuOpen(true)} style={{ cursor: 'pointer', color: '#3f3f46', display: 'flex', alignItems: 'center' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -275,29 +273,33 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* حقل البحث */}
+      {/* حقل بحث مصمم بدقة ومتناسق 100% بدون الخروج عن الشاشة */}
       {isSearchOpen && (
-        <div style={{ padding: '12px 16px', backgroundColor: '#fff', borderBottom: '1px solid #e4e4e7' }}>
+        <div style={{ padding: '10px 16px', backgroundColor: '#ffffff', borderBottom: '1px solid #e4e4e7', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <input
             type="text"
             placeholder="ابحث عن اسم العطر..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #d4d4d8', fontSize: '0.95rem', outline: 'none' }}
+            style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid #d4d4d8', fontSize: '0.9rem', outline: 'none', backgroundColor: '#f9f9f9' }}
+            autoFocus
           />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} style={{ border: 'none', background: 'none', color: '#a1a1aa', fontSize: '0.9rem', cursor: 'pointer' }}>مسح</button>
+          )}
         </div>
       )}
 
       {/* البانر */}
-      <div style={{ backgroundColor: '#2d3732', color: '#fff', textAlign: 'center', padding: '40px 20px', margin: '10px 16px', borderRadius: '16px' }}>
+      <div style={{ backgroundColor: '#2d3732', color: '#fff', textAlign: 'center', padding: '40px 20px', margin: '12px 16px', borderRadius: '16px' }}>
         <h1 style={{ fontSize: '1.8rem', margin: '0 0 8px 0', fontWeight: '800' }}>عطرك.. بصمتك التي لا تُنسى.</h1>
         <p style={{ fontSize: '0.9rem', color: '#e4e4e7', margin: 0 }}>اكتشف تشكيلة لينو الفاخرة الآن ➔</p>
       </div>
 
       {/* الفلترة */}
-      <div style={{ padding: '0 16px', marginTop: '25px', marginBottom: '15px' }}>
-        <h2 style={{ fontSize: '1.3rem', margin: '0 0 15px 0', fontWeight: '800' }}>التسوق حسب المجموعة</h2>
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
+      <div style={{ padding: '0 16px', marginTop: '20px', marginBottom: '15px' }}>
+        <h2 style={{ fontSize: '1.2rem', margin: '0 0 12px 0', fontWeight: '800' }}>التسوق حسب المجموعة</h2>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
           {["الكل", "LENO", "Original"].map((cat) => (
             <button
               key={cat}
@@ -337,14 +339,14 @@ export default function Home() {
                       {p.badge}
                     </span>
                   )}
-                  <div style={{ width: '100%', height: '180px', backgroundColor: '#f9f9f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: '100%', height: '170px', backgroundColor: '#f9f9f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   </div>
-                  <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
-                    <h3 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', fontWeight: '700', color: '#18181b' }}>{p.name}</h3>
+                  <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
+                    <h3 style={{ margin: '0 0 6px 0', fontSize: '0.85rem', fontWeight: '700', color: '#18181b', lineHeight: '1.3' }}>{p.name}</h3>
                     
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#2d3732' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#2d3732' }}>
                         IQD {firstSize ? firstSize.price.toLocaleString() : 0}
                       </span>
                       {firstSize && firstSize.originalPrice && firstSize.originalPrice > firstSize.price && (
@@ -372,20 +374,20 @@ export default function Home() {
             
             <div 
               onClick={() => setZoomedImage(selectedProduct.image)}
-              style={{ width: '100%', height: '240px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '15px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: '100%', height: '220px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '15px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <img src={selectedProduct.image} alt={selectedProduct.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
               <span style={{ position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem' }}>🔍 اضغط لتكبير الصورة</span>
             </div>
 
-            <h2 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
+            <h2 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: '900', color: '#2d3732' }}>
+              <span style={{ fontSize: '1.3rem', fontWeight: '900', color: '#2d3732' }}>
                 IQD {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()}
               </span>
               {selectedProduct.sizes[selectedSizeIndex].originalPrice && selectedProduct.sizes[selectedSizeIndex].originalPrice > selectedProduct.sizes[selectedSizeIndex].price && (
-                <span style={{ fontSize: '1rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
+                <span style={{ fontSize: '0.9rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
                   IQD {(selectedProduct.sizes[selectedSizeIndex].originalPrice * quantity).toLocaleString()}
                 </span>
               )}
@@ -434,19 +436,19 @@ export default function Home() {
         </div>
       )}
 
-      {/* نافذة السلة الفاخرة والمنظمة */}
+      {/* السلة الفاخرة - تم تحسين التصميم والتجاوب مع الشاشة بالكامل 100% */}
       {isCartOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 200 }}>
-          <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '90vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px 20px 10px 20px', display: 'flex', flexDirection: 'column', direction: 'rtl' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 200 }}>
+          <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '500px', height: '88vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '16px', display: 'flex', flexDirection: 'column', direction: 'rtl', boxSizing: 'border-box' }}>
             
-            {/* عنوان السلة */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f4f4f5', paddingBottom: '12px', marginBottom: '12px' }}>
-              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: '#18181b' }}>سلة المشتريات ({cartItemsCount})</h2>
+            {/* رأس السلة */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f4f4f5', paddingBottom: '10px', flexShrink: 0 }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#18181b' }}>سلة المشتريات ({cartItemsCount})</h2>
               <button onClick={() => setIsCartOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#71717a' }}>✕</button>
             </div>
             
-            {/* المحتوى القابل للتمرير */}
-            <div style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '15px' }}>
+            {/* محتوى السلة مع سكرول مرن */}
+            <div style={{ overflowY: 'auto', flexGrow: 1, padding: '12px 0' }}>
               {cart.length === 0 ? (
                 <div style={{ textAlign: 'center', color: '#71717a', margin: '40px 0' }}>
                   <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🛒</div>
@@ -454,7 +456,7 @@ export default function Home() {
                 </div>
               ) : (
                 <>
-                  {/* قائمة المنتجات */}
+                  {/* عناصر السلة */}
                   {cart.map(item => (
                     <div key={item.cartItemId} style={{ display: 'flex', gap: '12px', marginBottom: '12px', borderBottom: '1px solid #f4f4f5', paddingBottom: '12px' }}>
                       <img src={item.image} alt={item.name} style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'contain', backgroundColor: '#f9f9f9' }} />
@@ -474,45 +476,37 @@ export default function Home() {
                     </div>
                   ))}
 
-                  {/* استمارة المعلومات الفاخرة */}
-                  <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '14px', marginTop: '10px', border: '1px solid #f1f5f9' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-                      <span style={{ fontSize: '1rem' }}>📍</span>
+                  {/* استمارة معلومات الزبون والتوصيل */}
+                  <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                      <span style={{ fontSize: '0.9rem' }}>📍</span>
                       <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#1e293b', fontWeight: '800' }}>معلومات التوصيل والطلب:</h4>
                     </div>
                     
                     {/* اختيار المحافظة */}
-                    <div style={{ marginBottom: '10px' }}>
+                    <div style={{ marginBottom: '8px' }}>
                       <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '4px', color: '#475569' }}>اختر المحافظة / المنطقة:</label>
-                      <div style={{ position: 'relative' }}>
-                        <select 
-                          value={selectedProvince} 
-                          onChange={(e) => setSelectedProvince(e.target.value)}
-                          style={{ 
-                            width: '100%', 
-                            padding: '10px 12px', 
-                            borderRadius: '10px', 
-                            border: '1px solid #cbd5e1', 
-                            fontSize: '0.85rem', 
-                            outline: 'none', 
-                            backgroundColor: '#fff', 
-                            fontWeight: '700',
-                            color: '#0f172a',
-                            appearance: 'none',
-                            WebkitAppearance: 'none',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {provincesDelivery.map(p => (
-                            <option key={p.name} value={p.name}>
-                              {p.name} — ({p.price.toLocaleString()} د.ع)
-                            </option>
-                          ))}
-                        </select>
-                        <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#64748b', fontSize: '0.7rem' }}>
-                          ▼
-                        </div>
-                      </div>
+                      <select 
+                        value={selectedProvince} 
+                        onChange={(e) => setSelectedProvince(e.target.value)}
+                        style={{ 
+                          width: '100%', 
+                          padding: '10px', 
+                          borderRadius: '8px', 
+                          border: '1px solid #cbd5e1', 
+                          fontSize: '0.85rem', 
+                          outline: 'none', 
+                          backgroundColor: '#fff', 
+                          fontWeight: '700',
+                          color: '#0f172a'
+                        }}
+                      >
+                        {provincesDelivery.map(p => (
+                          <option key={p.name} value={p.name}>
+                            {p.name} — ({p.price.toLocaleString()} د.ع)
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* الاسم ورقم الهاتف */}
@@ -546,10 +540,10 @@ export default function Home() {
               )}
             </div>
 
-            {/* الجزء السفلي المثبت للمجموع وزر الطلب */}
+            {/* الجزء السفلي المثبت والمضمون الظهور دائماً */}
             {cart.length > 0 && (
-              <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', backgroundColor: '#fff' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px', fontSize: '0.8rem' }}>
+              <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '10px', marginTop: 'auto', flexShrink: 0, backgroundColor: '#fff' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '10px', fontSize: '0.8rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                     <span>مجموع العطور:</span>
                     <span>IQD {cartSubTotalPrice.toLocaleString()}</span>
@@ -558,15 +552,15 @@ export default function Home() {
                     <span>أجور التوصيل ({selectedProvince}):</span>
                     <span>{hasFreeDeliveryItem ? "مجاني 🚚✨" : `IQD ${deliveryFee.toLocaleString()}`}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '900', fontSize: '1.1rem', color: '#0f172a', borderTop: '1px solid #f8fafc', paddingTop: '6px', marginTop: '2px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '900', fontSize: '1rem', color: '#0f172a', borderTop: '1px solid #f8fafc', paddingTop: '4px', marginTop: '2px' }}>
                     <span>المجموع الكلي الصافي:</span>
                     <span style={{ color: '#2d3732' }}>IQD {cartFinalTotal.toLocaleString()}</span>
                   </div>
                 </div>
 
-                <button onClick={sendCartWhatsAppOrder} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(45, 55, 50, 0.15)' }}>
+                <button onClick={sendCartWhatsAppOrder} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '12px', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                   <span>إرسال الطلب الصافي عبر الواتساب</span>
-                  <span style={{ fontSize: '1.1rem' }}>💬</span>
+                  <span style={{ fontSize: '1rem' }}>💬</span>
                 </button>
               </div>
             )}
