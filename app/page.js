@@ -37,6 +37,7 @@ export default function Home() {
       category: "LENO",
       badge: "خصم خاص", 
       image: "https://iili.io/n3JiY4S.jpg",
+      stock: 10,
       sizes: [
         { label: "10 مل", price: 5000, originalPrice: null },
         { label: "35 مل", price: 13000, originalPrice: 17000 }
@@ -66,6 +67,7 @@ export default function Home() {
               imageUrl = item.image;
             }
 
+            const itemStock = item.stock_quantity !== undefined && item.stock_quantity !== null ? parseInt(item.stock_quantity) : 10;
             const itemOriginalPrice = item.original_price ? Number(item.original_price) : null;
             const itemDiscountedPrice = item.discounted_price ? Number(item.discounted_price) : null;
 
@@ -114,6 +116,7 @@ export default function Home() {
               category: item.category || "LENO",
               badge: item.badge || null,
               image: imageUrl,
+              stock: itemStock,
               sizes: parsedSizes
             };
           });
@@ -161,7 +164,7 @@ export default function Home() {
   };
 
   const addToCart = () => {
-    if (!selectedProduct) return;
+    if (!selectedProduct || selectedProduct.stock <= 0) return;
     const currentSize = selectedProduct.sizes[selectedSizeIndex];
     const cartItemId = `${selectedProduct.id}-${currentSize.label}`;
     
@@ -194,7 +197,6 @@ export default function Home() {
   const removeFromCart = (cartItemId) => {
     setCart(prevCart => {
       const newCart = prevCart.filter(item => item.cartItemId !== cartItemId);
-      // إغلاق السلة والعودة للموقع تلقائياً عند تفريغ العناصر
       if (newCart.length === 0) {
         setIsCartOpen(false);
       }
@@ -339,15 +341,25 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
             {filteredProducts.map((p) => {
               const firstSize = p.sizes && p.sizes[0] ? p.sizes[0] : null;
+              const isOutOfStock = p.stock <= 0;
+
               return (
-                <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
-                  {p.badge && (
-                    <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#2d3732', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
-                      {p.badge}
+                <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column', opacity: isOutOfStock ? 0.8 : 1 }}>
+                  
+                  {isOutOfStock ? (
+                    <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#b91c1c', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
+                      نفدت الكمية ❌
                     </span>
+                  ) : (
+                    p.badge && (
+                      <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#2d3732', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
+                        {p.badge}
+                      </span>
+                    )
                   )}
+
                   <div style={{ width: '100%', height: '170px', backgroundColor: '#f9f9f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: isOutOfStock ? 'grayscale(30%)' : 'none' }} />
                   </div>
                   <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
                     <h3 style={{ margin: '0 0 6px 0', fontSize: '0.85rem', fontWeight: '700', color: '#18181b', lineHeight: '1.3' }}>{p.name}</h3>
@@ -400,7 +412,7 @@ export default function Home() {
               )}
             </div>
 
-            {selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
+            {selectedProduct.stock > 0 && selectedProduct.sizes[selectedSizeIndex].freeDelivery && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f0fdf4', color: '#166534', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700', marginBottom: '14px', width: 'fit-content', border: '1px solid #bbf7d0' }}>
                 <span>🚚</span>
                 <span>توصيل مجاني لهذا الخيار</span>
@@ -419,18 +431,27 @@ export default function Home() {
               </div>
             </div>
 
-            <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#3f3f46' }}>العدد</span>
-              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e4e4e7', borderRadius: '8px', overflow: 'hidden' }}>
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>-</button>
-                <span style={{ width: '40px', textAlign: 'center', fontWeight: 'bold', fontSize: '1rem' }}>{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>+</button>
+            {selectedProduct.stock > 0 && (
+              <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#3f3f46' }}>العدد</span>
+                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e4e4e7', borderRadius: '8px', overflow: 'hidden' }}>
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>-</button>
+                  <span style={{ width: '40px', textAlign: 'center', fontWeight: 'bold', fontSize: '1rem' }}>{quantity}</span>
+                  <button onClick={() => setQuantity(Math.min(selectedProduct.stock, quantity + 1))} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>+</button>
+                </div>
               </div>
-            </div>
+            )}
 
-            <button onClick={addToCart} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer' }}>
-              إضافة إلى السلة 🛒
-            </button>
+            {selectedProduct.stock > 0 ? (
+              <button onClick={addToCart} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer' }}>
+                إضافة إلى السلة 🛒
+              </button>
+            ) : (
+              <button disabled style={{ width: '100%', backgroundColor: '#9ca3af', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'not-allowed' }}>
+                غير متوفر حالياً (نفدت الكمية) ❌
+              </button>
+            )}
+
           </div>
         </div>
       )}
@@ -443,18 +464,16 @@ export default function Home() {
         </div>
       )}
 
-      {/* النافذة المنبثقة للسلة - تصميم احترافي متناسق مع رجوع تلقائي للموقع عند الحذف */}
+      {/* السلة */}
       {isCartOpen && cart.length > 0 && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 200 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '480px', maxHeight: '82vh', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '16px', display: 'flex', flexDirection: 'column', direction: 'rtl', boxSizing: 'border-box' }}>
             
-            {/* رأس النافذة */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f4f4f5', paddingBottom: '10px', flexShrink: 0 }}>
               <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#18181b' }}>سلة المشتريات ({cartItemsCount})</h2>
               <button onClick={() => setIsCartOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#71717a' }}>✕</button>
             </div>
             
-            {/* المحتوى مع إمكانية التمرير */}
             <div style={{ overflowY: 'auto', flexGrow: 1, padding: '10px 0' }}>
               {cart.map(item => (
                 <div key={item.cartItemId} style={{ display: 'flex', gap: '12px', marginBottom: '12px', borderBottom: '1px solid #f4f4f5', paddingBottom: '12px', alignItems: 'center' }}>
@@ -475,7 +494,6 @@ export default function Home() {
                 </div>
               ))}
 
-              {/* استمارة معلومات الزبون */}
               <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                   <span style={{ fontSize: '0.9rem' }}>📍</span>
@@ -534,7 +552,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* الحساب النهائي والمفصل أسفل السلة */}
             <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '10px', marginTop: 'auto', flexShrink: 0, backgroundColor: '#fff' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '8px', fontSize: '0.8rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
