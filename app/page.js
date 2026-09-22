@@ -78,20 +78,18 @@ export default function Home() {
             }
 
             const itemStock = item.stock_quantity !== undefined && item.stock_quantity !== null ? parseInt(item.stock_quantity) : 10;
+            
+            // قراءة السعر الأصلي الرئيسي المكتوب في قاعدة البيانات
             const mainOriginalPrice = parsePriceVal(item.original_price);
 
             let rawSizes = [];
             if (Array.isArray(item.sizes) && item.sizes.length > 0) {
-              // لمعرفة أعلى سعر بين الأحجام
-              const validPrices = item.sizes.map(s => parsePriceVal(s.price) || 0).filter(p => p > 0);
-              const maxPrice = validPrices.length > 0 ? Math.max(...validPrices) : 0;
-
               rawSizes = item.sizes.map(s => {
                 let sizePrice = parsePriceVal(s.price) || 0;
                 let sizeOrigPrice = parsePriceVal(s.original_price);
 
-                // إذا كان هذا هو الحجم الأكبر وتوجد قيمة original_price في الجدول الرئيسي، يتم تطبيقها عليه
-                if (!sizeOrigPrice && mainOriginalPrice && sizePrice === maxPrice && mainOriginalPrice > sizePrice) {
+                // إذا لم يوجد سعر أصلي داخل الحجم، نستخدم السعر الأصلي الرئيسي للحجم الكبير (أكبر من 5000)
+                if (!sizeOrigPrice && mainOriginalPrice && sizePrice > 5000) {
                   sizeOrigPrice = mainOriginalPrice;
                 }
 
@@ -105,7 +103,7 @@ export default function Home() {
               const currentPrice = parsePriceVal(item.discounted_price) || parsePriceVal(item.price) || 0;
               rawSizes = [
                 { 
-                  label: item.size_label || "30 مل", 
+                  label: item.size_label || "35 مل", 
                   price: currentPrice, 
                   originalPrice: (mainOriginalPrice && mainOriginalPrice > currentPrice) ? mainOriginalPrice : null
                 }
@@ -169,7 +167,7 @@ export default function Home() {
 
   const openProduct = (product) => {
     setSelectedProduct(product);
-    // فتح الحجم الأكبر تلقائياً لو كان عليه الخصم
+    // تحديد الحجم الكبير تلقائياً عند فتح نافذة العطر
     const maxIndex = product.sizes.reduce((maxI, el, i, arr) => el.price > arr[maxI].price ? i : maxI, 0);
     setSelectedSizeIndex(maxIndex);
     setQuantity(1);
@@ -352,8 +350,8 @@ export default function Home() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
             {filteredProducts.map((p) => {
-              // إظهار الحجم الذي يحتوي على خصم في الكارت الرئيسي
-              const discountedSize = p.sizes.find(s => s.originalPrice) || p.sizes[0];
+              // اختيار الحجم الذي يحتوي على الخصم أو الحجم الأكبر لعرضه في الواجهة الرئيسية
+              const discountedSize = p.sizes.find(s => s.originalPrice) || p.sizes[p.sizes.length - 1];
               const isOutOfStock = p.stock <= 0;
 
               return (
@@ -438,7 +436,9 @@ export default function Home() {
                 {selectedProduct.sizes.map((size, index) => (
                   <button key={index} onClick={() => setSelectedSizeIndex(index)} style={{ flex: 1, minWidth: '90px', padding: '10px 6px', borderRadius: '8px', border: selectedSizeIndex === index ? '2px solid #2d3732' : '1px solid #e4e4e7', backgroundColor: selectedSizeIndex === index ? '#2d3732' : '#fff', color: selectedSizeIndex === index ? '#fff' : '#18181b', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.85rem' }}>{size.label}</div>
-                    <div style={{ fontSize: '0.7rem', marginTop: '2px', opacity: 0.8 }}>IQD {size.price.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.7rem', marginTop: '2px', opacity: 0.8 }}>
+                      IQD {size.price.toLocaleString()}
+                    </div>
                   </button>
                 ))}
               </div>
