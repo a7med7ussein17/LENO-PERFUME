@@ -159,6 +159,9 @@ export default function Home() {
   const deliveryFee = hasFreeDeliveryItem ? 0 : currentProvinceObj.price;
   const cartFinalTotal = cartSubTotalPrice + deliveryFee;
 
+  // استخراج قائمة الشركات / الأقسام المتوفرة ديناميكياً من قواعد البيانات
+  const categoriesList = ["الكل", ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
+
   const openProduct = (product) => {
     setSelectedProduct(product);
     const firstAvailableIndex = product.sizes.findIndex(s => s.available);
@@ -310,11 +313,11 @@ export default function Home() {
         <p style={{ fontSize: '0.9rem', color: '#e4e4e7', margin: 0 }}>اكتشف تشكيلة لينو الفاخرة الآن ➔</p>
       </div>
 
-      {/* الفلترة */}
+      {/* الفلترة الديناميكية حسب الشركة / المجموعة */}
       <div style={{ padding: '0 16px', marginTop: '20px', marginBottom: '15px' }}>
-        <h2 style={{ fontSize: '1.2rem', margin: '0 0 12px 0', fontWeight: '800' }}>التسوق حسب المجموعة</h2>
+        <h2 style={{ fontSize: '1.2rem', margin: '0 0 12px 0', fontWeight: '800' }}>التسوق حسب الشركة</h2>
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
-          {["الكل", "LENO", "Original"].map((cat) => (
+          {categoriesList.map((cat) => (
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
@@ -340,7 +343,7 @@ export default function Home() {
       <main style={{ padding: '0 16px' }}>
         {filteredProducts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#71717a' }}>
-            جاري تحميل المنتجات...
+            {products.length === 0 ? "جاري تحميل المنتجات..." : "لا توجد عطور ضمن هذا القسم حالياً."}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
@@ -614,15 +617,26 @@ export default function Home() {
       {isMenuOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', justifyContent: 'flex-start' }}>
           <div style={{ width: '75%', maxWidth: '300px', backgroundColor: '#fff', height: '100%', padding: '24px 20px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f4f4f5', paddingBottom: '15px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #f4f4f5', paddingBottom: '15px' }}>
               <div style={{ fontSize: '1.3rem', fontWeight: '900', color: '#2d3732' }}>لـينـو 🌿</div>
               <button onClick={() => setIsMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '1rem', fontWeight: '600', color: '#27272a' }}>
-              <div onClick={() => setIsMenuOpen(false)} style={{ cursor: 'pointer' }}>الرئيسية 🏠</div>
-              <div onClick={() => { setFilterCategory("LENO"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور LENO 🧪</div>
-              <div onClick={() => { setFilterCategory("Original"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>عطور Original ✨</div>
-              <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>تواصل معنا (واتساب) 💬</a>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.95rem', fontWeight: '600', color: '#27272a' }}>
+              <div onClick={() => { setFilterCategory("الكل"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>الرئيسية (الكل) 🏠</div>
+              
+              {/* أقسام الشركات في القائمة الجانبية تلقائياً */}
+              {categoriesList.filter(c => c !== "الكل").map((cat) => (
+                <div 
+                  key={cat} 
+                  onClick={() => { setFilterCategory(cat); setIsMenuOpen(false); }} 
+                  style={{ cursor: 'pointer', paddingRight: '8px', borderRight: filterCategory === cat ? '3px solid #2d3732' : 'none' }}
+                >
+                  عطور {cat} ✨
+                </div>
+              ))}
+
+              <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit', marginTop: '10px' }}>تواصل معنا (واتساب) 💬</a>
             </div>
           </div>
         </div>
