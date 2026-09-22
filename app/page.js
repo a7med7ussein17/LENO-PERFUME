@@ -77,10 +77,6 @@ export default function Home() {
               imageUrl = item.image;
             }
 
-            const itemOriginalPrice = parsePriceVal(item.original_price);
-            const itemDiscountedPrice = parsePriceVal(item.discounted_price);
-
-            // قراءة المخزون من عمود stock_quantity
             const itemStock = item.stock_quantity !== undefined && item.stock_quantity !== null ? parseInt(item.stock_quantity) : 10;
 
             let rawSizes = [];
@@ -89,23 +85,20 @@ export default function Home() {
                 let sizePrice = parsePriceVal(s.price) || 0;
                 let sizeOrigPrice = parsePriceVal(s.original_price);
 
-                if (!sizeOrigPrice && itemOriginalPrice && itemOriginalPrice > sizePrice) {
-                  sizeOrigPrice = itemOriginalPrice;
-                }
-
                 return {
                   label: s.label || "الحجم القياسي",
                   price: sizePrice,
-                  originalPrice: sizeOrigPrice
+                  originalPrice: (sizeOrigPrice && sizeOrigPrice > sizePrice) ? sizeOrigPrice : null
                 };
               });
             } else {
-              const currentPrice = itemDiscountedPrice || parsePriceVal(item.price) || 0;
+              const currentPrice = parsePriceVal(item.discounted_price) || parsePriceVal(item.price) || 0;
+              const origPrice = parsePriceVal(item.original_price);
               rawSizes = [
                 { 
                   label: item.size_label || "30 مل", 
                   price: currentPrice, 
-                  originalPrice: itemOriginalPrice && itemOriginalPrice > currentPrice ? itemOriginalPrice : null
+                  originalPrice: (origPrice && origPrice > currentPrice) ? origPrice : null
                 }
               ];
             }
@@ -360,7 +353,6 @@ export default function Home() {
                     </span>
                   )}
 
-                  {/* شارة نفاد الكمية */}
                   {isOutOfStock && (
                     <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#b91c1c', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
                       نفدت الكمية ❌
@@ -377,7 +369,7 @@ export default function Home() {
                       <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#2d3732' }}>
                         IQD {firstSize ? firstSize.price.toLocaleString() : 0}
                       </span>
-                      {firstSize && firstSize.originalPrice && firstSize.originalPrice > firstSize.price && (
+                      {firstSize && firstSize.originalPrice && (
                         <span style={{ fontSize: '0.75rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
                           IQD {firstSize.originalPrice.toLocaleString()}
                         </span>
@@ -410,11 +402,12 @@ export default function Home() {
 
             <h2 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
+            {/* السعر ينطبق بدقة على الحجم المختار حالياً فقط */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <span style={{ fontSize: '1.3rem', fontWeight: '900', color: '#2d3732' }}>
                 IQD {(selectedProduct.sizes[selectedSizeIndex].price * quantity).toLocaleString()}
               </span>
-              {selectedProduct.sizes[selectedSizeIndex].originalPrice && selectedProduct.sizes[selectedSizeIndex].originalPrice > selectedProduct.sizes[selectedSizeIndex].price && (
+              {selectedProduct.sizes[selectedSizeIndex].originalPrice && (
                 <span style={{ fontSize: '0.9rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
                   IQD {(selectedProduct.sizes[selectedSizeIndex].originalPrice * quantity).toLocaleString()}
                 </span>
@@ -440,10 +433,10 @@ export default function Home() {
               </div>
             </div>
 
-            {/* تحديد الكمية والحد الأقصى حسب المتوفر */}
+            {/* تحديد الكمية بدون إظهار المتبقي للزبون */}
             {selectedProduct.stock > 0 && (
               <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#3f3f46' }}>العدد (المتوفر: {selectedProduct.stock})</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#3f3f46' }}>العدد المطلوبة</span>
                 <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e4e4e7', borderRadius: '8px', overflow: 'hidden' }}>
                   <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ width: '36px', height: '36px', border: 'none', backgroundColor: '#f4f4f5', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>-</button>
                   <span style={{ width: '40px', textAlign: 'center', fontWeight: 'bold', fontSize: '1rem' }}>{quantity}</span>
@@ -452,7 +445,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* زر الإضافة للسلة أو زر ينبه بـ نفاد الكمية */}
+            {/* زر الشراء حسب التوفر */}
             {selectedProduct.stock > 0 ? (
               <button onClick={addToCart} style={{ width: '100%', backgroundColor: '#2d3732', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer' }}>
                 إضافة إلى السلة 🛒
