@@ -30,9 +30,9 @@ export default function Home() {
     { name: "صلاح الدين (تكريت)", price: 5000 }
   ];
 
-  const initialProducts = [];
-
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
+  // القسم الرئيسي المختار (perfumes أو glass)
+  const [mainTab, setMainTab] = useState("perfumes"); 
 
   useEffect(() => {
     async function fetchProducts() {
@@ -113,10 +113,14 @@ export default function Home() {
               freeDelivery: s.price > 0 && s.price === maxPrice
             }));
 
+            const catLower = (item.category || "").toLowerCase();
+            const isGlassItem = catLower.includes("زجاج") || catLower.includes("زجاجة") || catLower.includes("عبوات") || catLower.includes("علب") || catLower.includes("glass") || catLower.includes("bottle");
+
             return {
               id: item.id,
-              name: item.name || "عطر بدون اسم",
+              name: item.name || "منتج بدون اسم",
               category: item.category || "LENO",
+              isGlass: isGlassItem,
               badge: item.badge || null,
               image: imageUrl,
               sizes: parsedSizes
@@ -159,8 +163,11 @@ export default function Home() {
   const deliveryFee = hasFreeDeliveryItem ? 0 : currentProvinceObj.price;
   const cartFinalTotal = cartSubTotalPrice + deliveryFee;
 
-  // استخراج قائمة الشركات / الأقسام المتوفرة ديناميكياً من قواعد البيانات
-  const categoriesList = ["الكل", ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
+  // فصل المنتجات حسب القسم الرئيسي المختار (عطور أو زجاج)
+  const currentMainProducts = products.filter(p => mainTab === "glass" ? p.isGlass : !p.isGlass);
+
+  // استخراج قائمة الشركات / التصنيفات المتاحة ديناميكياً للقسم الحالي
+  const categoriesList = ["الكل", ...Array.from(new Set(currentMainProducts.map(p => p.category).filter(Boolean)))];
 
   const openProduct = (product) => {
     setSelectedProduct(product);
@@ -245,7 +252,7 @@ export default function Home() {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const filteredProducts = products.filter(p => {
+  const filteredProducts = currentMainProducts.filter(p => {
     const matchesCategory = filterCategory === "الكل" || p.category === filterCategory;
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -295,7 +302,7 @@ export default function Home() {
         <div style={{ padding: '10px 16px', backgroundColor: '#ffffff', borderBottom: '1px solid #e4e4e7', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <input
             type="text"
-            placeholder="ابحث عن اسم العطر..."
+            placeholder="ابحث هنا..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid #d4d4d8', fontSize: '0.9rem', outline: 'none', backgroundColor: '#f9f9f9' }}
@@ -307,43 +314,88 @@ export default function Home() {
         </div>
       )}
 
-      {/* البانر */}
-      <div style={{ backgroundColor: '#2d3732', color: '#fff', textAlign: 'center', padding: '40px 20px', margin: '12px 16px', borderRadius: '16px' }}>
-        <h1 style={{ fontSize: '1.8rem', margin: '0 0 8px 0', fontWeight: '800' }}>عطرك.. بصمتك التي لا تُنسى.</h1>
-        <p style={{ fontSize: '0.9rem', color: '#e4e4e7', margin: 0 }}>اكتشف تشكيلة لينو الفاخرة الآن ➔</p>
-      </div>
-
-      {/* الفلترة الديناميكية حسب الشركة / المجموعة */}
-      <div style={{ padding: '0 16px', marginTop: '20px', marginBottom: '15px' }}>
-        <h2 style={{ fontSize: '1.2rem', margin: '0 0 12px 0', fontWeight: '800' }}>التسوق حسب الشركة</h2>
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
-          {categoriesList.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setFilterCategory(cat)}
-              style={{
-                padding: '8px 18px',
-                borderRadius: '20px',
-                border: filterCategory === cat ? 'none' : '1px solid #e4e4e7',
-                backgroundColor: filterCategory === cat ? '#2d3732' : '#fff',
-                color: filterCategory === cat ? '#fff' : '#52525b',
-                fontWeight: '600',
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {cat}
-            </button>
-          ))}
+      {/* المبدل الرئيسي بين العطور والزجاج (Main Tab Switcher) */}
+      <div style={{ padding: '16px 16px 0 16px' }}>
+        <div style={{ display: 'flex', backgroundColor: '#e4e4e7', padding: '4px', borderRadius: '14px' }}>
+          <button
+            onClick={() => { setMainTab('perfumes'); setFilterCategory('الكل'); }}
+            style={{
+              flex: 1,
+              padding: '12px',
+              borderRadius: '10px',
+              border: 'none',
+              backgroundColor: mainTab === 'perfumes' ? '#2d3732' : 'transparent',
+              color: mainTab === 'perfumes' ? '#fff' : '#52525b',
+              fontWeight: '800',
+              fontSize: '0.95rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            قسم العطور 🌿
+          </button>
+          <button
+            onClick={() => { setMainTab('glass'); setFilterCategory('الكل'); }}
+            style={{
+              flex: 1,
+              padding: '12px',
+              borderRadius: '10px',
+              border: 'none',
+              backgroundColor: mainTab === 'glass' ? '#2d3732' : 'transparent',
+              color: mainTab === 'glass' ? '#fff' : '#52525b',
+              fontWeight: '800',
+              fontSize: '0.95rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            قسم الزجاج والعبوات 🍾
+          </button>
         </div>
       </div>
 
+      {/* البانر */}
+      <div style={{ backgroundColor: '#2d3732', color: '#fff', textAlign: 'center', padding: '30px 20px', margin: '16px 16px 12px 16px', borderRadius: '16px' }}>
+        <h1 style={{ fontSize: '1.6rem', margin: '0 0 6px 0', fontWeight: '800' }}>
+          {mainTab === 'perfumes' ? 'عطرك.. بصمتك التي لا تُنسى.' : 'تشكيلة الزجاج والعبوات الفاخرة'}
+        </h1>
+        <p style={{ fontSize: '0.85rem', color: '#e4e4e7', margin: 0 }}>
+          {mainTab === 'perfumes' ? 'اكتشف تشكيلة لينو العطرية الفاخرة الآن ➔' : 'اختر أرق أشكال الزجاجات والعلب بجميع الأحجام ➔'}
+        </p>
+      </div>
+
+      {/* الفلترة حسب الشركة / التصنيف للقسم الحالي */}
+      {categoriesList.length > 2 && (
+        <div style={{ padding: '0 16px', marginTop: '15px', marginBottom: '15px' }}>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
+            {categoriesList.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setFilterCategory(cat)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '20px',
+                  border: filterCategory === cat ? 'none' : '1px solid #e4e4e7',
+                  backgroundColor: filterCategory === cat ? '#2d3732' : '#fff',
+                  color: filterCategory === cat ? '#fff' : '#52525b',
+                  fontWeight: '600',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* المنتجات */}
-      <main style={{ padding: '0 16px' }}>
+      <main style={{ padding: '10px 16px 0 16px' }}>
         {filteredProducts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#71717a' }}>
-            {products.length === 0 ? "جاري تحميل المنتجات..." : "لا توجد عطور ضمن هذا القسم حالياً."}
+            {products.length === 0 ? "جاري تحميل البيانات..." : `لا توجد منتجات في ${mainTab === 'perfumes' ? 'قسم العطور' : 'قسم الزجاج'} حالياً.`}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
@@ -390,12 +442,12 @@ export default function Home() {
         )}
       </main>
 
-      {/* تفاصيل العطر */}
+      {/* تفاصيل المنتج */}
       {selectedProduct && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 100 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '90vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', overflowY: 'auto', direction: 'rtl' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <span style={{ fontSize: '0.85rem', color: '#71717a' }}>تفاصيل العطر</span>
+              <span style={{ fontSize: '0.85rem', color: '#71717a' }}>تفاصيل المنتج</span>
               <button onClick={() => setSelectedProduct(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
             </div>
             
@@ -496,7 +548,7 @@ export default function Home() {
       {zoomedImage && (
         <div onClick={() => setZoomedImage(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <button onClick={() => setZoomedImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', color: '#fff', background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer' }}>✕</button>
-          <img src={zoomedImage} alt="عطر زوم" style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: '8px' }} />
+          <img src={zoomedImage} alt="زوم" style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: '8px' }} />
         </div>
       )}
 
@@ -591,7 +643,7 @@ export default function Home() {
             <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '10px', marginTop: 'auto', flexShrink: 0, backgroundColor: '#fff' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '8px', fontSize: '0.8rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
-                  <span>مجموع العطور:</span>
+                  <span>مجموع المواد:</span>
                   <span>IQD {cartSubTotalPrice.toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
@@ -623,20 +675,15 @@ export default function Home() {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.95rem', fontWeight: '600', color: '#27272a' }}>
-              <div onClick={() => { setFilterCategory("الكل"); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>الرئيسية (الكل) 🏠</div>
-              
-              {/* أقسام الشركات في القائمة الجانبية تلقائياً */}
-              {categoriesList.filter(c => c !== "الكل").map((cat) => (
-                <div 
-                  key={cat} 
-                  onClick={() => { setFilterCategory(cat); setIsMenuOpen(false); }} 
-                  style={{ cursor: 'pointer', paddingRight: '8px', borderRight: filterCategory === cat ? '3px solid #2d3732' : 'none' }}
-                >
-                  عطور {cat} ✨
-                </div>
-              ))}
+              <div onClick={() => { setMainTab("perfumes"); setFilterCategory("الكل"); setIsMenuOpen(false); }} style={{ cursor: 'pointer', fontWeight: mainTab === 'perfumes' ? 'bold' : 'normal' }}>
+                قسم العطور 🌿
+              </div>
 
-              <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit', marginTop: '10px' }}>تواصل معنا (واتساب) 💬</a>
+              <div onClick={() => { setMainTab("glass"); setFilterCategory("الكل"); setIsMenuOpen(false); }} style={{ cursor: 'pointer', fontWeight: mainTab === 'glass' ? 'bold' : 'normal' }}>
+                قسم الزجاج والعبوات 🍾
+              </div>
+              
+              <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit', marginTop: '15px', borderTop: '1px solid #f4f4f5', paddingTop: '15px' }}>تواصل معنا (واتساب) 💬</a>
             </div>
           </div>
         </div>
