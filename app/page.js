@@ -46,7 +46,6 @@ export default function Home() {
         const data = await res.json();
         if (data && data.length > 0) {
           const formattedProducts = data.map(item => {
-            // معالجة جميع الصور كقائمة وليس صورة واحدة فقط
             let imageList = [];
             if (Array.isArray(item.image) && item.image.length > 0) {
               imageList = item.image.filter(img => typeof img === 'string' && img.trim() !== '');
@@ -165,6 +164,9 @@ export default function Home() {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  
+  // حالة لإظهار رسالة الخطأ إذا كانت البيانات ناقصة
+  const [formError, setFormError] = useState("");
 
   const currentProvinceObj = provincesDelivery.find(p => p.name === selectedProvince) || provincesDelivery[0];
 
@@ -229,8 +231,27 @@ export default function Home() {
     });
   };
 
+  // معالجة السحب باللمس للصور
+  const handleScroll = (e) => {
+    const scrollLeft = Math.abs(e.target.scrollLeft);
+    const width = e.target.offsetWidth;
+    const newIndex = Math.round(scrollLeft / width);
+    if (newIndex !== selectedImageIndex) {
+      setSelectedImageIndex(newIndex);
+    }
+  };
+
+  // إرسال الطلب مع الإجبار على ملء الحقول
   const sendCartWhatsAppOrder = () => {
     if (cart.length === 0) return;
+
+    // التحقق المباشر والإجباري من الحقول
+    if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
+      setFormError("⚠️ يرجى كتابة الاسم، رقم الهاتف، والعنوان التفصيلي لإكمال الطلب.");
+      return;
+    }
+
+    setFormError(""); // مسح الخطأ في حال كانت البيانات مكتملة
 
     let text = `مرحباً LENO PERFUME 🌿\nأرغب بطلب المنتجات التالية:\n\n`;
     
@@ -245,10 +266,10 @@ export default function Home() {
 
     text += `ــــــــــــــــــــــــــــ\n`;
     text += `📌 *معلومات الزبون والطلب:*\n`;
-    if (customerName) text += `- الاسم: ${customerName}\n`;
-    if (customerPhone) text += `- الهاتف: ${customerPhone}\n`;
+    text += `- الاسم: ${customerName}\n`;
+    text += `- الهاتف: ${customerPhone}\n`;
     text += `- المحافظة: ${selectedProvince}\n`;
-    if (customerAddress) text += `- العنوان التفصيلي: ${customerAddress}\n`;
+    text += `- العنوان التفصيلي: ${customerAddress}\n`;
 
     text += `\nــــــــــــــــــــــــــــ\n`;
     text += `مجموع المنتجات: ${cartSubTotalPrice.toLocaleString()} IQD\n`;
@@ -452,7 +473,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* تفاصيل المنتج */}
+      {/* تفاصيل المنتج مع سلايدر التمرير السلس بنفس أسلوب ياقوت */}
       {selectedProduct && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 100 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '90vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', overflowY: 'auto', direction: 'rtl', boxSizing: 'border-box' }}>
@@ -461,43 +482,59 @@ export default function Home() {
               <button onClick={() => setSelectedProduct(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
             </div>
             
-            {/* عرض الصورة الرئيسية الحالية */}
-            <div 
-              onClick={() => setZoomedImage(selectedProduct.images[selectedImageIndex] || selectedProduct.image)}
-              style={{ width: '100%', height: '220px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '10px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <img src={selectedProduct.images[selectedImageIndex] || selectedProduct.image} alt={selectedProduct.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-              <span style={{ position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem' }}>🔍 تكبير الصورة</span>
-            </div>
-
-            {/* شريط المعاينة لباقي الصور إن وجدت */}
-            {selectedProduct.images && selectedProduct.images.length > 1 && (
-              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '15px', paddingBottom: '4px' }}>
+            {/* معرض الصور التفاعلي باللمس (Swipe Carousel) */}
+            <div style={{ position: 'relative', width: '100%', marginBottom: '15px' }}>
+              <div 
+                onScroll={handleScroll}
+                style={{ 
+                  display: 'flex', 
+                  overflowX: 'auto', 
+                  scrollSnapType: 'x mandatory', 
+                  scrollBehavior: 'smooth',
+                  borderRadius: '16px',
+                  backgroundColor: '#f9f9f9',
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
                 {selectedProduct.images.map((img, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setSelectedImageIndex(idx)}
-                    style={{
-                      width: '50px',
-                      height: '50px',
-                      borderRadius: '8px',
-                      border: selectedImageIndex === idx ? '2px solid #2d3732' : '1px solid #e4e4e7',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      backgroundColor: '#f9f9f9',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justify: 'center'
+                  <div 
+                    key={idx} 
+                    onClick={() => setZoomedImage(img)}
+                    style={{ 
+                      flex: '0 0 100%', 
+                      scrollSnapAlign: 'start', 
+                      height: '240px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      cursor: 'pointer'
                     }}
                   >
-                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={img} alt={selectedProduct.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   </div>
                 ))}
               </div>
-            )}
 
-            <h2 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
+              {/* نقاط المؤشر التفاعلية (Dots Indicators) مثل ياقوت */}
+              {selectedProduct.images.length > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '10px' }}>
+                  {selectedProduct.images.map((_, idx) => (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        width: selectedImageIndex === idx ? '18px' : '6px', 
+                        height: '6px', 
+                        borderRadius: '10px', 
+                        backgroundColor: selectedImageIndex === idx ? '#2d3732' : '#d4d4d8', 
+                        transition: 'all 0.3s ease' 
+                      }} 
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <h2 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <span style={{ fontSize: '1.3rem', fontWeight: '900', color: '#2d3732' }}>
@@ -517,7 +554,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* خيارات الحجم */}
+            {/* خيارات الحجم بنفس سلاسة التصميم الحديث */}
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم أو العرض</label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -533,14 +570,14 @@ export default function Home() {
                         flex: 1, 
                         minWidth: '90px', 
                         padding: '10px 6px', 
-                        borderRadius: '8px', 
+                        borderRadius: '10px', 
                         border: isSelected ? '2px solid #2d3732' : '1px solid #e4e4e7', 
                         backgroundColor: isSelected ? '#2d3732' : '#fff', 
                         color: isSelected ? '#fff' : (isAvailable ? '#18181b' : '#a1a1aa'), 
                         fontWeight: 'bold', 
                         cursor: 'pointer', 
                         textAlign: 'center',
-                        position: 'relative'
+                        transition: 'all 0.2s ease'
                       }}
                     >
                       <div style={{ fontSize: '0.85rem' }}>{size.label}</div>
@@ -590,7 +627,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* السلة */}
+      {/* السلة ومرفق الإجبار على البيانات */}
       {isCartOpen && cart.length > 0 && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 200 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '480px', maxHeight: '85vh', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '16px', display: 'flex', flexDirection: 'column', direction: 'rtl', boxSizing: 'border-box' }}>
@@ -620,15 +657,22 @@ export default function Home() {
                 </div>
               ))}
 
-              {/* قسم معلومات التوصيل - معدل ليمنع خروج الإطار */}
+              {/* قسم معلومات التوصيل مع إدراج خيار الحقول المباشرة والتحقق */}
               <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '8px', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                   <span style={{ fontSize: '0.9rem' }}>📍</span>
-                  <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#1e293b', fontWeight: '800' }}>معلومات التوصيل والطلب:</h4>
+                  <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#1e293b', fontWeight: '800' }}>معلومات التوصيل والطلب (مطلوبة):</h4>
                 </div>
+
+                {/* إظهار التنبيه الأحمر عند النقص */}
+                {formError && (
+                  <div style={{ backgroundColor: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', padding: '8px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '8px' }}>
+                    {formError}
+                  </div>
+                )}
                 
                 <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '4px', color: '#475569' }}>اختر المحافظة / المنطقة:</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '4px', color: '#475569' }}>اختر المحافظة / المنطقة *</label>
                   <select 
                     value={selectedProvince} 
                     onChange={(e) => setSelectedProvince(e.target.value)}
@@ -653,30 +697,29 @@ export default function Home() {
                   </select>
                 </div>
 
-                {/* حقول الاسم والرقم بمرونة تضمن ثبات الإطار */}
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
                   <input 
                     type="text" 
-                    placeholder="الاسم الكامل" 
+                    placeholder="الاسم الكامل *" 
                     value={customerName} 
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
+                    onChange={(e) => { setCustomerName(e.target.value); setFormError(""); }}
+                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', border: customerName ? '1px solid #cbd5e1' : '1px solid #f87171', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
                   />
                   <input 
                     type="tel" 
-                    placeholder="رقم الهاتف" 
+                    placeholder="رقم الهاتف *" 
                     value={customerPhone} 
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', textAlign: 'right', boxSizing: 'border-box' }}
+                    onChange={(e) => { setCustomerPhone(e.target.value); setFormError(""); }}
+                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', border: customerPhone ? '1px solid #cbd5e1' : '1px solid #f87171', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', textAlign: 'right', boxSizing: 'border-box' }}
                   />
                 </div>
 
                 <input 
                   type="text" 
-                  placeholder="العنوان التفصيلي (المنطقة / أقرب نقطة دالة)" 
+                  placeholder="العنوان التفصيلي (المنطقة / أقرب نقطة دالة) *" 
                   value={customerAddress} 
-                  onChange={(e) => setCustomerAddress(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
+                  onChange={(e) => { setCustomerAddress(e.target.value); setFormError(""); }}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: customerAddress ? '1px solid #cbd5e1' : '1px solid #f87171', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
