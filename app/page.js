@@ -125,12 +125,20 @@ export default function Home() {
             const catLower = (item.category || "").toLowerCase();
             const isGlassItem = catLower.includes("زجاج") || catLower.includes("زجاجة") || catLower.includes("عبوات") || catLower.includes("علب") || catLower.includes("glass") || catLower.includes("bottle");
 
+            // ترجمة كلمة Discount إلى كلمة خصم باللغة العربية
+            let displayBadge = item.badge || null;
+            if (displayBadge && typeof displayBadge === 'string') {
+              if (displayBadge.toLowerCase().includes('discount')) {
+                displayBadge = displayBadge.replace(/discount/gi, 'خصم');
+              }
+            }
+
             return {
               id: item.id,
               name: item.name || "منتج بدون اسم",
               category: item.category || "LENO",
               isGlass: isGlassItem,
-              badge: item.badge || null,
+              badge: displayBadge,
               images: imageList,
               image: imageList[0],
               sizes: parsedSizes
@@ -165,7 +173,6 @@ export default function Home() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   
-  // حالة لإظهار رسالة الخطأ إذا كانت البيانات ناقصة
   const [formError, setFormError] = useState("");
 
   const currentProvinceObj = provincesDelivery.find(p => p.name === selectedProvince) || provincesDelivery[0];
@@ -231,7 +238,6 @@ export default function Home() {
     });
   };
 
-  // معالجة السحب باللمس للصور
   const handleScroll = (e) => {
     const scrollLeft = Math.abs(e.target.scrollLeft);
     const width = e.target.offsetWidth;
@@ -241,17 +247,15 @@ export default function Home() {
     }
   };
 
-  // إرسال الطلب مع الإجبار على ملء الحقول
   const sendCartWhatsAppOrder = () => {
     if (cart.length === 0) return;
 
-    // التحقق المباشر والإجباري من الحقول
     if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
-      setFormError("⚠️ يرجى كتابة الاسم، رقم الهاتف، والعنوان التفصيلي لإكمال الطلب.");
+      setFormError("⚠️ يرجى كتابة كافة البيانات المطلوبة (الاسم، الهاتف، العنوان) لإكمال الطلب.");
       return;
     }
 
-    setFormError(""); // مسح الخطأ في حال كانت البيانات مكتملة
+    setFormError("");
 
     let text = `مرحباً LENO PERFUME 🌿\nأرغب بطلب المنتجات التالية:\n\n`;
     
@@ -473,7 +477,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* تفاصيل المنتج مع سلايدر التمرير السلس بنفس أسلوب ياقوت */}
+      {/* تفاصيل المنتج */}
       {selectedProduct && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 100 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '90vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', overflowY: 'auto', direction: 'rtl', boxSizing: 'border-box' }}>
@@ -482,7 +486,7 @@ export default function Home() {
               <button onClick={() => setSelectedProduct(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
             </div>
             
-            {/* معرض الصور التفاعلي باللمس (Swipe Carousel) */}
+            {/* معرض الصور بالتمرير السلس */}
             <div style={{ position: 'relative', width: '100%', marginBottom: '15px' }}>
               <div 
                 onScroll={handleScroll}
@@ -515,7 +519,6 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* نقاط المؤشر التفاعلية (Dots Indicators) مثل ياقوت */}
               {selectedProduct.images.length > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '10px' }}>
                   {selectedProduct.images.map((_, idx) => (
@@ -554,7 +557,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* خيارات الحجم بنفس سلاسة التصميم الحديث */}
+            {/* الحجم */}
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم أو العرض</label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -627,7 +630,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* السلة ومرفق الإجبار على البيانات */}
+      {/* السلة مع الحقول الأنيقة بالنجمة الحمراء */}
       {isCartOpen && cart.length > 0 && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 200 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '480px', maxHeight: '85vh', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '16px', display: 'flex', flexDirection: 'column', direction: 'rtl', boxSizing: 'border-box' }}>
@@ -657,28 +660,29 @@ export default function Home() {
                 </div>
               ))}
 
-              {/* قسم معلومات التوصيل مع إدراج خيار الحقول المباشرة والتحقق */}
-              <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '8px', boxSizing: 'border-box' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+              {/* قسم معلومات التوصيل الأنيق بجانب نجمة حمراء */}
+              <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '8px', boxSizing: 'border-box' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                   <span style={{ fontSize: '0.9rem' }}>📍</span>
-                  <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#1e293b', fontWeight: '800' }}>معلومات التوصيل والطلب (مطلوبة):</h4>
+                  <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#1e293b', fontWeight: '800' }}>معلومات التوصيل والطلب:</h4>
                 </div>
 
-                {/* إظهار التنبيه الأحمر عند النقص */}
                 {formError && (
-                  <div style={{ backgroundColor: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', padding: '8px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '8px' }}>
+                  <div style={{ backgroundColor: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', padding: '8px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '10px' }}>
                     {formError}
                   </div>
                 )}
                 
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '4px', color: '#475569' }}>اختر المحافظة / المنطقة *</label>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '4px', color: '#475569' }}>
+                    المحافظة <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
                   <select 
                     value={selectedProvince} 
                     onChange={(e) => setSelectedProvince(e.target.value)}
                     style={{ 
                       width: '100%', 
-                      padding: '8px', 
+                      padding: '9px 12px', 
                       borderRadius: '8px', 
                       border: '1px solid #cbd5e1', 
                       fontSize: '0.85rem', 
@@ -697,30 +701,46 @@ export default function Home() {
                   </select>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
-                  <input 
-                    type="text" 
-                    placeholder="الاسم الكامل *" 
-                    value={customerName} 
-                    onChange={(e) => { setCustomerName(e.target.value); setFormError(""); }}
-                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', border: customerName ? '1px solid #cbd5e1' : '1px solid #f87171', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
-                  />
-                  <input 
-                    type="tel" 
-                    placeholder="رقم الهاتف *" 
-                    value={customerPhone} 
-                    onChange={(e) => { setCustomerPhone(e.target.value); setFormError(""); }}
-                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', border: customerPhone ? '1px solid #cbd5e1' : '1px solid #f87171', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', textAlign: 'right', boxSizing: 'border-box' }}
-                  />
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', width: '100%', boxSizing: 'border-box' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '4px', color: '#475569' }}>
+                      الاسم الكامل <span style={{ color: '#dc2626' }}>*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder="أدخل اسمك" 
+                      value={customerName} 
+                      onChange={(e) => { setCustomerName(e.target.value); setFormError(""); }}
+                      style={{ width: '100%', padding: '9px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '4px', color: '#475569' }}>
+                      رقم الهاتف <span style={{ color: '#dc2626' }}>*</span>
+                    </label>
+                    <input 
+                      type="tel" 
+                      placeholder="077XXXXXXXX" 
+                      value={customerPhone} 
+                      onChange={(e) => { setCustomerPhone(e.target.value); setFormError(""); }}
+                      style={{ width: '100%', padding: '9px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', textAlign: 'right', boxSizing: 'border-box' }}
+                    />
+                  </div>
                 </div>
 
-                <input 
-                  type="text" 
-                  placeholder="العنوان التفصيلي (المنطقة / أقرب نقطة دالة) *" 
-                  value={customerAddress} 
-                  onChange={(e) => { setCustomerAddress(e.target.value); setFormError(""); }}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: customerAddress ? '1px solid #cbd5e1' : '1px solid #f87171', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
-                />
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '4px', color: '#475569' }}>
+                    العنوان التفصيلي <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="المنطقة / المحلة / أقرب نقطة دالة" 
+                    value={customerAddress} 
+                    onChange={(e) => { setCustomerAddress(e.target.value); setFormError(""); }}
+                    style={{ width: '100%', padding: '9px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
+                  />
+                </div>
               </div>
             </div>
 
