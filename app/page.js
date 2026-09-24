@@ -31,7 +31,6 @@ export default function Home() {
   ];
 
   const [products, setProducts] = useState([]);
-  // القسم الرئيسي المختار (perfumes أو glass)
   const [mainTab, setMainTab] = useState("perfumes"); 
 
   useEffect(() => {
@@ -47,11 +46,22 @@ export default function Home() {
         const data = await res.json();
         if (data && data.length > 0) {
           const formattedProducts = data.map(item => {
-            let imageUrl = "https://iili.io/n3JiY4S.jpg";
+            // معالجة جميع الصور كقائمة وليس صورة واحدة فقط
+            let imageList = [];
             if (Array.isArray(item.image) && item.image.length > 0) {
-              imageUrl = item.image[0];
+              imageList = item.image.filter(img => typeof img === 'string' && img.trim() !== '');
             } else if (typeof item.image === 'string' && item.image.trim() !== '') {
-              imageUrl = item.image;
+              try {
+                const parsed = JSON.parse(item.image);
+                if (Array.isArray(parsed)) imageList = parsed;
+                else imageList = [item.image];
+              } catch {
+                imageList = [item.image];
+              }
+            }
+
+            if (imageList.length === 0) {
+              imageList = ["https://iili.io/n3JiY4S.jpg"];
             }
 
             const itemOriginalPrice = item.original_price ? Number(item.original_price) : null;
@@ -122,7 +132,8 @@ export default function Home() {
               category: item.category || "LENO",
               isGlass: isGlassItem,
               badge: item.badge || null,
-              image: imageUrl,
+              images: imageList,
+              image: imageList[0],
               sizes: parsedSizes
             };
           });
@@ -137,6 +148,7 @@ export default function Home() {
   }, []);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [filterCategory, setFilterCategory] = useState("الكل");
@@ -163,14 +175,12 @@ export default function Home() {
   const deliveryFee = hasFreeDeliveryItem ? 0 : currentProvinceObj.price;
   const cartFinalTotal = cartSubTotalPrice + deliveryFee;
 
-  // فصل المنتجات حسب القسم الرئيسي المختار (عطور أو زجاج)
   const currentMainProducts = products.filter(p => mainTab === "glass" ? p.isGlass : !p.isGlass);
-
-  // استخراج قائمة الشركات / التصنيفات المتاحة ديناميكياً للقسم الحالي
   const categoriesList = ["الكل", ...Array.from(new Set(currentMainProducts.map(p => p.category).filter(Boolean)))];
 
   const openProduct = (product) => {
     setSelectedProduct(product);
+    setSelectedImageIndex(0);
     const firstAvailableIndex = product.sizes.findIndex(s => s.available);
     setSelectedSizeIndex(firstAvailableIndex !== -1 ? firstAvailableIndex : 0);
     setQuantity(1);
@@ -186,7 +196,7 @@ export default function Home() {
     const newItem = {
       cartItemId: cartItemId,
       name: selectedProduct.name,
-      image: selectedProduct.image,
+      image: selectedProduct.images[selectedImageIndex] || selectedProduct.image,
       sizeLabel: currentSize.label,
       price: currentSize.price,
       freeDelivery: currentSize.freeDelivery,
@@ -305,7 +315,7 @@ export default function Home() {
             placeholder="ابحث هنا..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid #d4d4d8', fontSize: '0.9rem', outline: 'none', backgroundColor: '#f9f9f9' }}
+            style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid #d4d4d8', fontSize: '0.9rem', outline: 'none', backgroundColor: '#f9f9f9', boxSizing: 'border-box' }}
             autoFocus
           />
           {searchQuery && (
@@ -314,7 +324,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* المبدل الرئيسي بين العطور والزجاج (Main Tab Switcher) */}
+      {/* المبدل الرئيسي بين العطور والزجاج */}
       <div style={{ padding: '16px 16px 0 16px' }}>
         <div style={{ display: 'flex', backgroundColor: '#e4e4e7', padding: '4px', borderRadius: '14px' }}>
           <button
@@ -364,7 +374,7 @@ export default function Home() {
         </p>
       </div>
 
-      {/* الفلترة حسب الشركة / التصنيف للقسم الحالي */}
+      {/* الفلترة */}
       {categoriesList.length > 2 && (
         <div style={{ padding: '0 16px', marginTop: '15px', marginBottom: '15px' }}>
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
@@ -445,19 +455,47 @@ export default function Home() {
       {/* تفاصيل المنتج */}
       {selectedProduct && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', zIndex: 100 }}>
-          <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '90vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', overflowY: 'auto', direction: 'rtl' }}>
+          <div style={{ backgroundColor: '#fff', width: '100%', maxHeight: '90vh', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px', overflowY: 'auto', direction: 'rtl', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
               <span style={{ fontSize: '0.85rem', color: '#71717a' }}>تفاصيل المنتج</span>
               <button onClick={() => setSelectedProduct(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
             </div>
             
+            {/* عرض الصورة الرئيسية الحالية */}
             <div 
-              onClick={() => setZoomedImage(selectedProduct.image)}
-              style={{ width: '100%', height: '220px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '15px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => setZoomedImage(selectedProduct.images[selectedImageIndex] || selectedProduct.image)}
+              style={{ width: '100%', height: '220px', borderRadius: '16px', backgroundColor: '#f9f9f9', overflow: 'hidden', marginBottom: '10px', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <img src={selectedProduct.image} alt={selectedProduct.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-              <span style={{ position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem' }}>🔍 اضغط لتكبير الصورة</span>
+              <img src={selectedProduct.images[selectedImageIndex] || selectedProduct.image} alt={selectedProduct.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              <span style={{ position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem' }}>🔍 تكبير الصورة</span>
             </div>
+
+            {/* شريط المعاينة لباقي الصور إن وجدت */}
+            {selectedProduct.images && selectedProduct.images.length > 1 && (
+              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '15px', paddingBottom: '4px' }}>
+                {selectedProduct.images.map((img, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    style={{
+                      width: '50px',
+                      height: '50px',
+                      borderRadius: '8px',
+                      border: selectedImageIndex === idx ? '2px solid #2d3732' : '1px solid #e4e4e7',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      backgroundColor: '#f9f9f9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justify: 'center'
+                    }}
+                  >
+                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ))}
+              </div>
+            )}
 
             <h2 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', fontWeight: '800' }}>{selectedProduct.name}</h2>
             
@@ -555,7 +593,7 @@ export default function Home() {
       {/* السلة */}
       {isCartOpen && cart.length > 0 && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 200 }}>
-          <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '480px', maxHeight: '82vh', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '16px', display: 'flex', flexDirection: 'column', direction: 'rtl', boxSizing: 'border-box' }}>
+          <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '480px', maxHeight: '85vh', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '16px', display: 'flex', flexDirection: 'column', direction: 'rtl', boxSizing: 'border-box' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f4f4f5', paddingBottom: '10px', flexShrink: 0 }}>
               <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#18181b' }}>سلة المشتريات ({cartItemsCount})</h2>
@@ -582,7 +620,8 @@ export default function Home() {
                 </div>
               ))}
 
-              <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '8px' }}>
+              {/* قسم معلومات التوصيل - معدل ليمنع خروج الإطار */}
+              <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '8px', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                   <span style={{ fontSize: '0.9rem' }}>📍</span>
                   <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#1e293b', fontWeight: '800' }}>معلومات التوصيل والطلب:</h4>
@@ -602,7 +641,8 @@ export default function Home() {
                       outline: 'none', 
                       backgroundColor: '#fff', 
                       fontWeight: '700',
-                      color: '#0f172a'
+                      color: '#0f172a',
+                      boxSizing: 'border-box'
                     }}
                   >
                     {provincesDelivery.map(p => (
@@ -613,20 +653,21 @@ export default function Home() {
                   </select>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                {/* حقول الاسم والرقم بمرونة تضمن ثبات الإطار */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', width: '100%', boxSizing: 'border-box' }}>
                   <input 
                     type="text" 
                     placeholder="الاسم الكامل" 
                     value={customerName} 
                     onChange={(e) => setCustomerName(e.target.value)}
-                    style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff' }}
+                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
                   />
                   <input 
                     type="tel" 
                     placeholder="رقم الهاتف" 
                     value={customerPhone} 
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', textAlign: 'right' }}
+                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.8rem', outline: 'none', backgroundColor: '#fff', textAlign: 'right', boxSizing: 'border-box' }}
                   />
                 </div>
 
@@ -668,7 +709,7 @@ export default function Home() {
       {/* القائمة الجانبية */}
       {isMenuOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', justifyContent: 'flex-start' }}>
-          <div style={{ width: '75%', maxWidth: '300px', backgroundColor: '#fff', height: '100%', padding: '24px 20px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ width: '75%', maxWidth: '300px', backgroundColor: '#fff', height: '100%', padding: '24px 20px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #f4f4f5', paddingBottom: '15px' }}>
               <div style={{ fontSize: '1.3rem', fontWeight: '900', color: '#2d3732' }}>لـينـو 🌿</div>
               <button onClick={() => setIsMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
