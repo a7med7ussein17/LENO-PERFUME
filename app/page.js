@@ -31,7 +31,7 @@ export default function Home() {
   ];
 
   const [products, setProducts] = useState([]);
-  const [mainTab, setMainTab] = useState("perfumes"); // "perfumes" | "spray" | "glass"
+  const [mainTab, setMainTab] = useState("perfumes"); 
 
   useEffect(() => {
     async function fetchProducts() {
@@ -66,6 +66,8 @@ export default function Home() {
             const itemOriginalPrice = item.original_price ? Number(item.original_price) : null;
             const itemDiscountedPrice = item.discounted_price ? Number(item.discounted_price) : null;
 
+            const mainProductFreeDelivery = Boolean(item.free_delivery);
+
             let rawSizes = [];
             if (Array.isArray(item.sizes) && item.sizes.length > 0) {
               rawSizes = item.sizes.map(s => {
@@ -84,7 +86,6 @@ export default function Home() {
                 let sizeStock = null;
                 if (s.stock !== undefined && s.stock !== null) sizeStock = Number(s.stock);
                 else if (s.quantity !== undefined && s.quantity !== null) sizeStock = Number(s.quantity);
-                else if (s.stock_quantity !== undefined && s.stock_quantity !== null) sizeStock = Number(s.stock_quantity);
 
                 let isAvailable = true;
                 if (sizeStock !== null) {
@@ -93,13 +94,14 @@ export default function Home() {
                   isAvailable = Boolean(s.available);
                 }
 
+                const isSizeFree = s.free_delivery !== undefined ? Boolean(s.free_delivery) : mainProductFreeDelivery;
+
                 return {
                   label: s.label || s.size_label || "الحجم القياسي",
                   price: sizePrice,
                   originalPrice: sizeOrigPrice,
                   available: isAvailable,
-                  // تصحيح: التوصيل المجاني يكون فقط إما مثبت بالداتا بيز أو للمنتجات ذات السعر العالي (مثلاً فوق 35,000)
-                  freeDelivery: s.free_delivery !== undefined ? Boolean(s.free_delivery) : (sizePrice >= 35000)
+                  freeDelivery: isSizeFree
                 };
               });
             } else {
@@ -113,7 +115,7 @@ export default function Home() {
                   price: currentPrice, 
                   originalPrice: itemOriginalPrice,
                   available: mainAvailable,
-                  freeDelivery: item.free_delivery !== undefined ? Boolean(item.free_delivery) : (currentPrice >= 35000)
+                  freeDelivery: mainProductFreeDelivery
                 }
               ];
             }
@@ -121,13 +123,10 @@ export default function Home() {
             const catLower = (item.category || "").toLowerCase();
             const nameLower = (item.name || "").toLowerCase();
 
-            // التعرف على قسم الزجاج
-            const isGlassItem = catLower.includes("زجاج") || catLower.includes("زجاجة") || catLower.includes("عبوات") || catLower.includes("علب") || catLower.includes("glass") || catLower.includes("bottle");
-            
-            // التعرف على قسم المطر / معطر الجسم (Spray)
+            const isGlassItem = catLower.includes("زجاج") || catLower.includes("زجاجة") || catLower.includes("عبوات") || catLower.includes("glass");
             const isSprayItem = !isGlassItem && (
-              catLower.includes("مطر") || catLower.includes("معطر") || catLower.includes("spray") || catLower.includes("mist") || catLower.includes("سبراي") ||
-              nameLower.includes("مطر") || nameLower.includes("معطر") || nameLower.includes("spray") || nameLower.includes("mist")
+              catLower.includes("مطر") || catLower.includes("معطر") || catLower.includes("spray") || catLower.includes("mist") ||
+              nameLower.includes("مطر") || nameLower.includes("معطر") || nameLower.includes("spray")
             );
 
             let displayBadge = item.badge || null;
@@ -189,11 +188,10 @@ export default function Home() {
   const deliveryFee = hasFreeDeliveryItem ? 0 : currentProvinceObj.price;
   const cartFinalTotal = cartSubTotalPrice + deliveryFee;
 
-  // تصنيف المنتجات حسب التبويب النشط
   const currentMainProducts = products.filter(p => {
     if (mainTab === "glass") return p.isGlass;
     if (mainTab === "spray") return p.isSpray;
-    return !p.isGlass && !p.isSpray; // العطور العادية
+    return !p.isGlass && !p.isSpray; 
   });
 
   const categoriesList = ["الكل", ...Array.from(new Set(currentMainProducts.map(p => p.category).filter(Boolean)))];
@@ -237,6 +235,19 @@ export default function Home() {
 
     setSelectedProduct(null);
     setIsCartOpen(true);
+  };
+
+  // تغيير الكمية داخل السلة
+  const updateCartQuantity = (cartItemId, newQty) => {
+    if (newQty <= 0) {
+      removeFromCart(cartItemId);
+      return;
+    }
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.cartItemId === cartItemId ? { ...item, quantity: newQty } : item
+      )
+    );
   };
 
   const removeFromCart = (cartItemId) => {
@@ -360,7 +371,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* المبدل الرئيسي المطور */}
+      {/* المبدل الرئيسي */}
       <div style={{ padding: '16px 16px 0 16px' }}>
         <div style={{ display: 'flex', backgroundColor: '#e4e4e7', padding: '4px', borderRadius: '14px', gap: '2px' }}>
           <button
@@ -664,7 +675,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* السلة */}
+      {/* السلة المعدلة بالكامل بحجم متناسق */}
       {isCartOpen && cart.length > 0 && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 200 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '480px', maxHeight: '85vh', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '16px', display: 'flex', flexDirection: 'column', direction: 'rtl', boxSizing: 'border-box' }}>
@@ -676,21 +687,36 @@ export default function Home() {
             
             <div style={{ overflowY: 'auto', flexGrow: 1, padding: '10px 0' }}>
               {cart.map(item => (
-                <div key={item.cartItemId} style={{ display: 'flex', gap: '12px', marginBottom: '12px', borderBottom: '1px solid #f4f4f5', paddingBottom: '12px', alignItems: 'center' }}>
-                  <img src={item.image} alt={item.name} style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'contain', backgroundColor: '#f9f9f9' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#18181b', fontWeight: '700' }}>{item.name}</h4>
-                      <button onClick={() => removeFromCart(item.cartItemId)} style={{ background: 'none', border: 'none', color: '#b91c1c', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>حذف</button>
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#52525b', marginTop: '2px' }}>
-                      {item.sizeLabel} {item.freeDelivery && <span style={{ color: '#166534', fontWeight: 'bold' }}>(توصيل مجاني)</span>}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#2d3732' }}>IQD {(item.price * item.quantity).toLocaleString()}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#71717a' }}>العدد: {item.quantity}</span>
+                <div key={item.cartItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f4f4f5', paddingBottom: '12px', marginBottom: '12px' }}>
+                  
+                  {/* الجهة اليمين: زر الحذف والعداد متناسق جداً */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+                    <button onClick={() => removeFromCart(item.cartItemId)} style={{ background: 'none', border: 'none', color: '#b91c1c', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
+                      حذف
+                    </button>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: 'bold' }}>العدد:</span>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #e4e4e7', borderRadius: '6px', backgroundColor: '#f9f9f9', height: '26px', overflow: 'hidden' }}>
+                        <button onClick={() => updateCartQuantity(item.cartItemId, item.quantity - 1)} style={{ width: '24px', height: '100%', border: 'none', backgroundColor: 'transparent', fontSize: '0.9rem', fontWeight: 'bold', color: '#18181b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
+                        <span style={{ padding: '0 6px', fontSize: '0.8rem', fontWeight: 'bold', color: '#18181b', minWidth: '16px', textAlign: 'center' }}>{item.quantity}</span>
+                        <button onClick={() => updateCartQuantity(item.cartItemId, item.quantity + 1)} style={{ width: '24px', height: '100%', border: 'none', backgroundColor: 'transparent', fontSize: '0.9rem', fontWeight: 'bold', color: '#18181b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* الجهة اليسار: التفاصيل والصورة */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#18181b', fontWeight: '700', textAlign: 'right' }}>{item.name}</h4>
+                      <span style={{ fontSize: '0.75rem', color: '#71717a', marginTop: '2px' }}>{item.sizeLabel}</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#2d3732', marginTop: '2px' }}>
+                        IQD {(item.price * item.quantity).toLocaleString()}
+                      </span>
+                    </div>
+                    <img src={item.image} alt={item.name} style={{ width: '45px', height: '55px', borderRadius: '6px', objectFit: 'contain', backgroundColor: '#f9f9f9', flexShrink: 0 }} />
+                  </div>
+
                 </div>
               ))}
 
