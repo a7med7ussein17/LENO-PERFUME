@@ -237,7 +237,6 @@ export default function Home() {
     setIsCartOpen(true);
   };
 
-  // تغيير الكمية داخل السلة
   const updateCartQuantity = (cartItemId, newQty) => {
     if (newQty <= 0) {
       removeFromCart(cartItemId);
@@ -483,6 +482,7 @@ export default function Home() {
             {filteredProducts.map((p) => {
               const firstSize = p.sizes && p.sizes[0] ? p.sizes[0] : null;
               const allSizesOutOfStock = p.sizes.every(s => !s.available);
+              const hasDiscount = firstSize && firstSize.originalPrice && firstSize.originalPrice > firstSize.price;
 
               return (
                 <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -492,9 +492,9 @@ export default function Home() {
                       نفذت الكمية
                     </span>
                   ) : (
-                    p.badge && (
-                      <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#2d3732', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
-                        {p.badge}
+                    (hasDiscount || p.badge) && (
+                      <span style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#b91c1c', color: '#fff', fontSize: '0.65rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold', zIndex: 2 }}>
+                        {hasDiscount ? "خصم" : p.badge}
                       </span>
                     )
                   )}
@@ -509,7 +509,7 @@ export default function Home() {
                       <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#2d3732' }}>
                         IQD {firstSize ? firstSize.price.toLocaleString() : 0}
                       </span>
-                      {firstSize && firstSize.originalPrice && firstSize.originalPrice > firstSize.price && (
+                      {hasDiscount && (
                         <span style={{ fontSize: '0.75rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
                           IQD {firstSize.originalPrice.toLocaleString()}
                         </span>
@@ -675,7 +675,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* السلة المعدلة بالكامل بحجم متناسق */}
+      {/* السلة */}
       {isCartOpen && cart.length > 0 && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 200 }}>
           <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '480px', maxHeight: '85vh', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', padding: '16px', display: 'flex', flexDirection: 'column', direction: 'rtl', boxSizing: 'border-box' }}>
@@ -689,7 +689,6 @@ export default function Home() {
               {cart.map(item => (
                 <div key={item.cartItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f4f4f5', paddingBottom: '12px', marginBottom: '12px' }}>
                   
-                  {/* الجهة اليمين: زر الحذف والعداد متناسق جداً */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
                     <button onClick={() => removeFromCart(item.cartItemId)} style={{ background: 'none', border: 'none', color: '#b91c1c', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
                       حذف
@@ -705,7 +704,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* الجهة اليسار: التفاصيل والصورة */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#18181b', fontWeight: '700', textAlign: 'right' }}>{item.name}</h4>
@@ -720,7 +718,6 @@ export default function Home() {
                 </div>
               ))}
 
-              {/* قسم معلومات التوصيل */}
               <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '8px', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                   <span style={{ fontSize: '0.9rem' }}>📍</span>
@@ -848,15 +845,9 @@ export default function Home() {
               </div>
 
               <div onClick={() => { setMainTab("glass"); setFilterCategory("الكل"); setIsMenuOpen(false); }} style={{ cursor: 'pointer', fontWeight: mainTab === 'glass' ? 'bold' : 'normal' }}>
-                قسم الزجاج والعبوات 🍾
-              </div>
-              
-              <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit', marginTop: '15px', borderTop: '1px solid #f4f4f5', paddingTop: '15px' }}>تواصل معنا (واتساب) 💬</a>
-            </div>
-          </div>
-        </div>
-      )}
+                سبب عدم ظهور شارة "خصم" باللغة العربية بشكل صحيح هو الاعتماد السابق فقط على كلمة `discount` القادمة من قاعدة البيانات، أو عدم تحقق الكود بشكل مباشر من فارق الأسعار.
 
-    </div>
-  );
-}
+تم تعديل كود بطاقة المنتج بالكامل كالآتي:
+1. التحقق تلقائياً مما إذا كان السعر الأصلي للمنتج أكبر من سعر الخصم (`firstSize.originalPrice > firstSize.price`).
+2. إذا وجد خصم، ستظهر الشارة فوراً باللون الأحمر وبكلمة **"خصم"**.
+3. إذا لم يوجد خصم ولكن يوجد نص في حقل الشارة (`badge`) في قاعدة البيانات، فسيتم عرضه بدلاً منها.
