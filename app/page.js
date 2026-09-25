@@ -132,7 +132,7 @@ export default function Home() {
             let displayBadge = item.badge || null;
             if (displayBadge && typeof displayBadge === 'string') {
               if (displayBadge.toLowerCase().includes('discount')) {
-                displayBadge = displayBadge.replace(/discount/gi, 'خصم');
+                displayBadge = 'خصم';
               }
             }
 
@@ -194,7 +194,17 @@ export default function Home() {
     return !p.isGlass && !p.isSpray; 
   });
 
-  const categoriesList = ["الكل", ...Array.from(new Set(currentMainProducts.map(p => p.category).filter(Boolean)))];
+  // إعادة ترتيب الفئات بحيث تكون عطور LENO في المقدمة دائماً
+  const rawCategories = Array.from(new Set(currentMainProducts.map(p => p.category).filter(Boolean)));
+  const sortedCategories = rawCategories.sort((a, b) => {
+    const aIsLeno = a.toLowerCase().includes("leno") || a.includes("لينو");
+    const bIsLeno = b.toLowerCase().includes("leno") || b.includes("لينو");
+    if (aIsLeno && !bIsLeno) return -1;
+    if (!aIsLeno && bIsLeno) return 1;
+    return 0;
+  });
+
+  const categoriesList = ["الكل", ...sortedCategories];
 
   const openProduct = (product) => {
     setSelectedProduct(product);
@@ -358,7 +368,7 @@ export default function Home() {
         <div style={{ padding: '10px 16px', backgroundColor: '#ffffff', borderBottom: '1px solid #e4e4e7', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <input
             type="text"
-            placeholder="ابحث هنا..."
+            placeholder="ابحث عن عطر..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid #d4d4d8', fontSize: '0.9rem', outline: 'none', backgroundColor: '#f9f9f9', boxSizing: 'border-box' }}
@@ -389,7 +399,7 @@ export default function Home() {
               whiteSpace: 'nowrap'
             }}
           >
-            العطور 🌿
+            عطور لينو 🌿
           </button>
           <button
             onClick={() => { setMainTab('spray'); setFilterCategory('الكل'); }}
@@ -430,43 +440,46 @@ export default function Home() {
         </div>
       </div>
 
-      {/* البانر */}
+      {/* البانر الرئيسي */}
       <div style={{ backgroundColor: '#2d3732', color: '#fff', textAlign: 'center', padding: '26px 20px', margin: '16px 16px 12px 16px', borderRadius: '16px' }}>
         <h1 style={{ fontSize: '1.45rem', margin: '0 0 6px 0', fontWeight: '800' }}>
-          {mainTab === 'perfumes' && 'عطرك.. بصمتك التي لا تُنسى.'}
+          {mainTab === 'perfumes' && 'تشكيلة عطور LENO التركيب الخاصة'}
           {mainTab === 'spray' && 'انتعاش يدوم طوال اليوم ✨'}
           {mainTab === 'glass' && 'تشكيلة الزجاج والعبوات الفاخرة'}
         </h1>
         <p style={{ fontSize: '0.8rem', color: '#e4e4e7', margin: 0 }}>
-          {mainTab === 'perfumes' && 'اكتشف تشكيلة لينو العطرية الفاخرة الآن ➔'}
+          {mainTab === 'perfumes' && 'عطرك.. بصمتك التي لا تُنسى بأرقى الزيوت الفرنسية والتركيب ➔'}
           {mainTab === 'spray' && 'تصفح أرقى المطر والمعطرات اليومية للجسم ➔'}
           {mainTab === 'glass' && 'اختر أرق أشكال الزجاجات والعلب بجميع الأحجام ➔'}
         </p>
       </div>
 
-      {/* الفلترة الفرعية */}
+      {/* الفلترة الفرعية (تضع براند LENO في البداية) */}
       {categoriesList.length > 2 && (
         <div style={{ padding: '0 16px', marginTop: '15px', marginBottom: '15px' }}>
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
-            {categoriesList.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                style={{
-                  padding: '8px 18px',
-                  borderRadius: '20px',
-                  border: filterCategory === cat ? 'none' : '1px solid #e4e4e7',
-                  backgroundColor: filterCategory === cat ? '#2d3732' : '#fff',
-                  color: filterCategory === cat ? '#fff' : '#52525b',
-                  fontWeight: '600',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {cat}
-              </button>
-            ))}
+            {categoriesList.map((cat) => {
+              const isLenoCat = cat.toLowerCase().includes("leno") || cat.includes("لينو");
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setFilterCategory(cat)}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '20px',
+                    border: filterCategory === cat ? 'none' : (isLenoCat ? '1.5px solid #2d3732' : '1px solid #e4e4e7'),
+                    backgroundColor: filterCategory === cat ? '#2d3732' : (isLenoCat ? '#f0fdf4' : '#fff'),
+                    color: filterCategory === cat ? '#fff' : (isLenoCat ? '#166534' : '#52525b'),
+                    fontWeight: isLenoCat ? '800' : '600',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {cat} {isLenoCat && filterCategory !== cat && '👑'}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -475,14 +488,16 @@ export default function Home() {
       <main style={{ padding: '10px 16px 0 16px' }}>
         {filteredProducts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#71717a' }}>
-            {products.length === 0 ? "جاري تحميل البيانات..." : `لا توجد منتجات متوفرة في هذا القسم حالياً.`}
+            {products.length === 0 ? "جاري تحميل البيانات..." : `لا توجد منتجات متوفرة حالياً.`}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
             {filteredProducts.map((p) => {
               const firstSize = p.sizes && p.sizes[0] ? p.sizes[0] : null;
               const allSizesOutOfStock = p.sizes.every(s => !s.available);
-              const hasDiscount = firstSize && firstSize.originalPrice && firstSize.originalPrice > firstSize.price;
+              
+              // التحقق الدقيق من وجود خصم
+              const hasDiscount = p.sizes.some(s => s.originalPrice && Number(s.originalPrice) > Number(s.price));
 
               return (
                 <div key={p.id} onClick={() => openProduct(p)} style={{ backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #f4f4f5', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -509,7 +524,7 @@ export default function Home() {
                       <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#2d3732' }}>
                         IQD {firstSize ? firstSize.price.toLocaleString() : 0}
                       </span>
-                      {hasDiscount && (
+                      {firstSize && firstSize.originalPrice && firstSize.originalPrice > firstSize.price && (
                         <span style={{ fontSize: '0.75rem', color: '#a1a1aa', textDecoration: 'line-through' }}>
                           IQD {firstSize.originalPrice.toLocaleString()}
                         </span>
@@ -667,7 +682,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* زوم الصورة */}
+      {/* تكبير الصورة */}
       {zoomedImage && (
         <div onClick={() => setZoomedImage(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <button onClick={() => setZoomedImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', color: '#fff', background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer' }}>✕</button>
@@ -837,7 +852,7 @@ export default function Home() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.95rem', fontWeight: '600', color: '#27272a' }}>
               <div onClick={() => { setMainTab("perfumes"); setFilterCategory("الكل"); setIsMenuOpen(false); }} style={{ cursor: 'pointer', fontWeight: mainTab === 'perfumes' ? 'bold' : 'normal' }}>
-                قسم العطور 🌿
+                قسم عطور لينو 🌿
               </div>
 
               <div onClick={() => { setMainTab("spray"); setFilterCategory("الكل"); setIsMenuOpen(false); }} style={{ cursor: 'pointer', fontWeight: mainTab === 'spray' ? 'bold' : 'normal' }}>
@@ -845,9 +860,13 @@ export default function Home() {
               </div>
 
               <div onClick={() => { setMainTab("glass"); setFilterCategory("الكل"); setIsMenuOpen(false); }} style={{ cursor: 'pointer', fontWeight: mainTab === 'glass' ? 'bold' : 'normal' }}>
-                سبب عدم ظهور شارة "خصم" باللغة العربية بشكل صحيح هو الاعتماد السابق فقط على كلمة `discount` القادمة من قاعدة البيانات، أو عدم تحقق الكود بشكل مباشر من فارق الأسعار.
+                الزجاج والعبوات 🍾
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-تم تعديل كود بطاقة المنتج بالكامل كالآتي:
-1. التحقق تلقائياً مما إذا كان السعر الأصلي للمنتج أكبر من سعر الخصم (`firstSize.originalPrice > firstSize.price`).
-2. إذا وجد خصم، ستظهر الشارة فوراً باللون الأحمر وبكلمة **"خصم"**.
-3. إذا لم يوجد خصم ولكن يوجد نص في حقل الشارة (`badge`) في قاعدة البيانات، فسيتم عرضه بدلاً منها.
+    </div>
+  );
+}
