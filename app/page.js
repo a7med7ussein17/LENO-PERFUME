@@ -97,7 +97,9 @@ export default function Home() {
                   label: s.label || s.size_label || "الحجم القياسي",
                   price: sizePrice,
                   originalPrice: sizeOrigPrice,
-                  available: isAvailable
+                  available: isAvailable,
+                  // تصحيح: التوصيل المجاني يكون فقط إما مثبت بالداتا بيز أو للمنتجات ذات السعر العالي (مثلاً فوق 35,000)
+                  freeDelivery: s.free_delivery !== undefined ? Boolean(s.free_delivery) : (sizePrice >= 35000)
                 };
               });
             } else {
@@ -107,20 +109,14 @@ export default function Home() {
 
               rawSizes = [
                 { 
-                  label: item.size_label || "30 مل", 
+                  label: item.size_label || "200 مل", 
                   price: currentPrice, 
                   originalPrice: itemOriginalPrice,
-                  available: mainAvailable
+                  available: mainAvailable,
+                  freeDelivery: item.free_delivery !== undefined ? Boolean(item.free_delivery) : (currentPrice >= 35000)
                 }
               ];
             }
-
-            const maxPrice = Math.max(...rawSizes.map(s => s.price));
-
-            const parsedSizes = rawSizes.map(s => ({
-              ...s,
-              freeDelivery: s.price > 0 && s.price === maxPrice
-            }));
 
             const catLower = (item.category || "").toLowerCase();
             const nameLower = (item.name || "").toLowerCase();
@@ -150,7 +146,7 @@ export default function Home() {
               badge: displayBadge,
               images: imageList,
               image: imageList[0],
-              sizes: parsedSizes
+              sizes: rawSizes
             };
           });
           setProducts(formattedProducts);
@@ -364,7 +360,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* المبدل الرئيسي المطور (العطور / معطرات Spray / الزجاج) */}
+      {/* المبدل الرئيسي المطور */}
       <div style={{ padding: '16px 16px 0 16px' }}>
         <div style={{ display: 'flex', backgroundColor: '#e4e4e7', padding: '4px', borderRadius: '14px', gap: '2px' }}>
           <button
@@ -599,7 +595,7 @@ export default function Home() {
             {/* الحجم */}
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '8px', color: '#3f3f46' }}>اختر الحجم أو العرض</label>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                 {selectedProduct.sizes.map((size, index) => {
                   const isSelected = selectedSizeIndex === index;
                   const isAvailable = size.available;
@@ -609,9 +605,8 @@ export default function Home() {
                       key={index} 
                       onClick={() => setSelectedSizeIndex(index)} 
                       style={{ 
-                        flex: 1, 
-                        minWidth: '90px', 
-                        padding: '10px 6px', 
+                        minWidth: '100px', 
+                        padding: '8px 12px', 
                         borderRadius: '10px', 
                         border: isSelected ? '2px solid #2d3732' : '1px solid #e4e4e7', 
                         backgroundColor: isSelected ? '#2d3732' : '#fff', 
