@@ -36,7 +36,8 @@ export default function Home() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
+        // تم تحديث الرابط هنا لجلب المنتجات المفعّلة فقط (is_active = true)
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&is_active=eq.true`, {
           headers: {
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`
@@ -45,7 +46,10 @@ export default function Home() {
         if (!res.ok) throw new Error("فشل الاتصال");
         const data = await res.json();
         if (data && data.length > 0) {
-          const formattedProducts = data.map(item => {
+          // تصفية أمان إضافية للتأكد من استبعاد أي عنصر غير مفعل
+          const activeItems = data.filter(item => item.is_active !== false);
+
+          const formattedProducts = activeItems.map(item => {
             let imageList = [];
             if (Array.isArray(item.image) && item.image.length > 0) {
               imageList = item.image.filter(img => typeof img === 'string' && img.trim() !== '');
@@ -149,6 +153,8 @@ export default function Home() {
             };
           });
           setProducts(formattedProducts);
+        } else {
+          setProducts([]);
         }
 
       } catch (err) {
